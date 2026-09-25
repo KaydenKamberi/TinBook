@@ -1,0 +1,11 @@
+{
+  "library_dir": "library",
+  "voices_dir": "voices",
+  "default_voice": "en_US-lessac-medium",
+  "audio_format": "opus",
+  "audio_bitrate": "32k",
+  "host": "127.0.0.1",
+  "port": 0,
+  "user_agent": "Tinbook/0.1 (personal audiobook project)",
+  "http_timeout": 20
+}

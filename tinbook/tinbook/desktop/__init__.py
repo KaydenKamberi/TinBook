@@ -1,0 +1,1 @@
+"""Tinbook desktop application."""

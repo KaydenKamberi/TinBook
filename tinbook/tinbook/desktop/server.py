@@ -1,0 +1,1 @@
+"""Flask API owned by CP2A; routes are defined in ARCHITECTURE.md."""
