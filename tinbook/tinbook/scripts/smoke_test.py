@@ -6,9 +6,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import wave
 from pathlib import Path
 
 import imageio_ffmpeg
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.config import get_config
 
@@ -41,8 +46,8 @@ def main() -> int:
             with tempfile.TemporaryDirectory() as temporary_dir:
                 wav_path = Path(temporary_dir) / "smoke.wav"
                 opus_path = Path(temporary_dir) / "smoke.opus"
-                with wav_path.open("wb") as wav_file:
-                    voice.synthesize("Hello from Tinbook.", wav_file)
+                with wave.open(str(wav_path), "wb") as wav_file:
+                    voice.synthesize_wav("Hello from Tinbook.", wav_file)
                 subprocess.run(
                     [
                         ffmpeg,
