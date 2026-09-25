@@ -21,11 +21,11 @@ BASE_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main"
 
 def voice_files(voice: str) -> tuple[str, str]:
     """Return the relative model and metadata paths for a voice name."""
-    match = re.fullmatch(r"([a-z]{2,3}_[A-Z]{2})-([a-z0-9]+)-([a-z0-9]+)", voice)
+    match = re.fullmatch(r"([a-z]{2,3}_[A-Z]{2})-([a-z0-9_]+)-([a-z0-9_]+)", voice)
     if not match:
         raise ValueError(
             "Voice must look like 'en_US-lessac-medium' "
-            "(language_region-speaker-quality)."
+            "(language_region-speaker-quality; speaker and quality may contain _)."
         )
     language_region, speaker, quality = match.groups()
     language = language_region.split("_", maxsplit=1)[0]

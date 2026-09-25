@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import socket
 import threading
 
 from flask import Flask

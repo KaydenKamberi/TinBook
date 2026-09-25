@@ -75,7 +75,7 @@ def get_config() -> Config: ...
 Load order (later wins): built-in defaults → `config.json` (committed) → `config.local.json` (gitignored) → environment variables `TINBOOK_LIBRARY_DIR`, `TINBOOK_VOICES_DIR`, `TINBOOK_DEFAULT_VOICE`, `TINBOOK_PORT`. Cache the result (`functools.lru_cache`). Create `library_dir` and `voices_dir` if missing.
 
 ## 3. Data models (`core/models.py`)
-All dataclasses have `to_dict() -> dict` and `@classmethod from_dict(d: dict)`. Unknown keys in `from_dict` are ignored.
+All dataclasses have `to_dict() -> dict` and `@classmethod from_dict(d: dict)`. Unknown keys in `from_dict` are ignored. `Book.from_dict` treats a missing `chapters` key as `[]`.
 ```python
 @dataclass
 class SearchResult:
@@ -123,7 +123,7 @@ class Progress:
     finished: bool = False
     updated_at: str = ""      # ISO 8601 UTC; "" means never saved
 ```
-**Slug rule:** lowercase title, keep `[a-z0-9]`, collapse everything else to single `-`, strip `-` from ends, max 40 chars (cut at last `-` before 40 if possible). Implemented as `models.slugify(title: str) -> str`.
+**Slug rule:** transliterate to ASCII first (Unicode NFKD, drop combining marks, so `é` → `e`), lowercase, keep `[a-z0-9]`, collapse everything else to single `-`, strip `-` from ends, max 40 chars (cut at the last `-` at or before position 40 if possible, so a word ending exactly at 40 is kept; otherwise hard-cut at 40). If the result is empty, return `"book"`. Implemented as `models.slugify(title: str) -> str`.
 **Time helper:** `models.now_iso() -> str` returns UTC like `2026-09-24T18:03:11Z`.
 
 ## 4. Library folder format (shared by desktop & device)
