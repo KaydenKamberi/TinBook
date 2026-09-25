@@ -24,7 +24,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd tinbook/tinbook && python -m desktop.app --browser"
+args = "python -m desktop.app --browser"
 waitForPort = 5000
 
 [workflows.workflow.metadata]

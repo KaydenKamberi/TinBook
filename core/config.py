@@ -9,6 +9,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+_ROOT_DIR = Path(__file__).resolve().parent.parent  # repo root; tests may monkeypatch
+
 
 @dataclass(frozen=True)
 class Config:
@@ -46,7 +48,7 @@ def _resolve_path(value: str | Path, root_dir: Path) -> Path:
 @lru_cache(maxsize=1)
 def get_config() -> Config:
     """Load defaults, project settings, local settings, and environment overrides."""
-    root_dir = Path(__file__).resolve().parent.parent
+    root_dir = _ROOT_DIR
     settings: dict[str, Any] = {
         "library_dir": "library",
         "voices_dir": "voices",
@@ -68,7 +70,7 @@ def get_config() -> Config:
         ("TINBOOK_PORT", "port"),
     ):
         value = os.environ.get(env_name)
-        if value is not None:
+        if value:  # empty string counts as unset
             settings[setting_name] = value
 
     port = int(settings["port"])

@@ -1,0 +1,23 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated data (never commit)
+library/
+voices/
+*.onnx
+*.onnx.json
+*.opus
+*.wav
+*.mp3
+*.img
+
+# Local settings
+config.local.json
+
+# OS junk
+.DS_Store
+Thumbs.db

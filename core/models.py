@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime, timezone
 from typing import Literal, TypeVar
@@ -26,12 +27,14 @@ def now_iso() -> str:
 
 def slugify(title: str) -> str:
     """Convert a title to a lowercase, URL-safe slug of at most 40 characters."""
-    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    decomposed = unicodedata.normalize("NFKD", title)
+    ascii_title = "".join(char for char in decomposed if not unicodedata.combining(char))
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_title.lower()).strip("-")
     if len(slug) > 40:
-        prefix = slug[:40]
-        last_hyphen = prefix.rfind("-")
-        slug = prefix[:last_hyphen] if last_hyphen > 0 else prefix
-    return slug.rstrip("-")
+        # Look one char past the limit so a word ending exactly at 40 is kept whole.
+        last_hyphen = slug[:41].rfind("-")
+        slug = slug[:last_hyphen] if last_hyphen > 0 else slug[:40]
+    return slug.rstrip("-") or "book"
 
 
 @dataclass
@@ -95,7 +98,7 @@ class Book:
         values = _known_fields(cls, data)
         values["chapters"] = [
             chapter if isinstance(chapter, Chapter) else Chapter.from_dict(chapter)
-            for chapter in values["chapters"]
+            for chapter in values.get("chapters", [])
         ]
         return cls(**values)
 
@@ -105,10 +108,12 @@ class Book:
 
     def total_duration_sec(self) -> float:
         """Sum chapter durations that are known."""
-        return sum(
-            chapter.duration_sec
-            for chapter in self.chapters
-            if chapter.duration_sec is not None
+        return float(
+            sum(
+                chapter.duration_sec
+                for chapter in self.chapters
+                if chapter.duration_sec is not None
+            )
         )
 
 
