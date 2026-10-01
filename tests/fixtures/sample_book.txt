@@ -1,0 +1,58 @@
+The Project Gutenberg Ebook of Sample Book, by Test Author
+
+This ebook is for the use of anyone anywhere in the United States and
+most other parts of the world at no cost and with almost no restrictions
+whatsoever.  You may copy it, give it away or reuse it under the terms
+of the Project Gutenberg License included with this ebook or online at
+www.gutenberg.org.  If you are not located in the United States, you
+will have to check the laws of the country where you are located before
+using this Ebook.
+
+
+Title: Sample Book
+Author: Test Author
+Release Date: January 1, 2024
+Etext prepared by John Doe
+Produced by Jane Smith
+Transcribed by Bob Johnson
+
+
+*** START OF THE PROJECT GUTENBERG EBOOK SAMPLE BOOK ***
+
+
+Produced by Jane Smith
+E-text prepared by John Doe
+
+
+CONTENTS
+
+I. Chapter One
+II. Chapter Two
+III. Chapter Three
+IV. Chapter Four
+
+
+PART ONE
+
+CHAPTER I
+
+This is the first chapter of the sample book. It contains some text that will be used for testing the chapter splitting functionality. There are several paragraphs here to make sure everything works correctly.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+
+This paragraph has an [Illustration: test image] that should be removed. Also some _italic_ text that needs to be cleaned. And a dash--test that should become a comma.
+
+CHAPTER II
+
+This is the second chapter. It continues the story with more text and different content. The chapter splitting should handle this properly.
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae.
+
+CHAPTER III
+
+The third chapter is here. More content follows below.
+
+Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem.
+
+
+*** END OF THE PROJECT GUTENBERG EBOOK SAMPLE BOOK ***
