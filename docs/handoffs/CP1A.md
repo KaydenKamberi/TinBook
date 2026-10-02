@@ -5,7 +5,7 @@
   - The pipeline is text → WAV in a temp dir → ffmpeg → `out_path.part` → `os.replace` to `out_path`. If synthesis fails, the `.part` file is deleted and any existing complete file is left untouched.
   - The text goes to Piper one paragraph at a time (split on blank lines, hard wraps joined), and every chunk is streamed into the same WAV, so memory stays flat on long chapters. Paragraphs get a 0.4 s pause between them.
   - Duration is the WAV frame count divided by the sample rate.
-  - ffmpeg is detected once (cached). Candidates are tried in order, bundled `imageio-ffmpeg` first, then `ffmpeg` on PATH. The first one whose `ffmpeg -hide_banner -encoders` output lists `libopus` is used. If none has it, `check_environment()["opus"]` is `False`, and asking for `opus` raises a `TTSError` that explains how to switch to mp3.
+  - ffmpeg detection is cached only once it finds ffmpeg with libopus. "Not found" and "no libopus" are checked again on the next call, so installing ffmpeg works without restarting the app. The encode step times out after `max(300 s, audio length)`; a timeout raises `TTSError` and leaves no `.part` file. Candidates are tried in order, bundled `imageio-ffmpeg` first, then `ffmpeg` on PATH. The first one whose `ffmpeg -hide_banner -encoders` output lists `libopus` is used. If none has it, `check_environment()["opus"]` is `False`, and asking for `opus` raises a `TTSError` that explains how to switch to mp3.
   - Two formats are supported: `opus` (`libopus`, `-f opus`) and `mp3` (`libmp3lame`, `-f mp3`), both encoded as mono at the bitrate passed in.
   - **Engine fallback:** if `from piper import PiperVoice` fails, the module runs a `piper` executable from PATH as `piper --model X.onnx --config X.onnx.json --output_raw`. It sends one paragraph per stdin line and streams the raw int16 output into the WAV. The sample rate comes from the voice's `.onnx.json`. Both the standalone binary and the piper-tts CLI accept these flags.
   - Any Piper, onnxruntime or OS failure is wrapped in `TTSError`.
@@ -19,7 +19,7 @@
   - **Regenerate during generation:** if the voice or format changed during a chapter, that chapter is redone with the new settings. `enqueue()` on the book currently generating queues it again, so a late regenerate is never missed.
   - `stop()` lets the current chapter finish, then the worker exits. It waits at most 2 seconds. The book stays `generating`, so the next `start()` resumes it.
   - Bitrate: if the book's format matches `config.audio_format`, `config.audio_bitrate` is used. Otherwise the default for the book's format is used (`opus` → `32k`, `mp3` → `48k`).
-- **Tests:** `tests/test_tts.py` (19) and `tests/test_jobs.py` (19). Piper, ffmpeg and `core.library` are all faked, so there is no network and no real synthesis. Full suite: **67 passed**. The threaded tests passed 40 runs in a row with no flakes.
+- **Tests:** `tests/test_tts.py` (23) and `tests/test_jobs.py` (19). Piper, ffmpeg and `core.library` are all faked, so there is no network and no real synthesis. Full suite: **71 passed**. The threaded tests passed 40 runs in a row with no flakes.
 
 ## How to test
 ```
@@ -69,4 +69,4 @@ You should see `ready [('done', …), ('done', …), ('done', …)]`. The folder
   - `DELETE /api/books/<id>` needs no queue call. The worker notices the deletion and cleans up after itself.
   - Call `get_queue().stop()` on window close.
 - **CP2B.** `GET /api/jobs` returns `{"current": {"book_id", "chapter_index", "chapters_done", "chapters_total"} | None, "queued": [...]}`. `chapter_index` is `None` for a moment at the start and end of a book.
-- **Tests that touch config:** call `get_config.cache_clear()`, and also `tts._detect_ffmpeg.cache_clear()` and `tts._voice_cache.clear()` if they use `tts`.
+- **Tests that touch config:** call `get_config.cache_clear()`, and also `tts._reset_ffmpeg_cache()` and `tts._voice_cache.clear()` if they use `tts`.

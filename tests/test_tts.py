@@ -25,11 +25,11 @@ def env(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("TINBOOK_VOICES_DIR", str(voices))
     monkeypatch.setenv("TINBOOK_LIBRARY_DIR", str(tmp_path / "library"))
     get_config.cache_clear()
-    tts._detect_ffmpeg.cache_clear()
+    tts._reset_ffmpeg_cache()
     tts._voice_cache.clear()
     yield voices
     get_config.cache_clear()
-    tts._detect_ffmpeg.cache_clear()
+    tts._reset_ffmpeg_cache()
     tts._voice_cache.clear()
 
 
@@ -73,11 +73,13 @@ class FakeFFmpeg:
         self.encoders = encoders  # ffmpeg path -> -encoders output
         self.fail_encode = fail_encode
         self.encode_commands: list[list[str]] = []
+        self.encode_timeouts: list[float | None] = []
 
     def __call__(self, command, **kwargs):
         if "-encoders" in command:
             return subprocess.CompletedProcess(command, 0, self.encoders.get(command[0], ""), "")
         self.encode_commands.append(command)
+        self.encode_timeouts.append(kwargs.get("timeout"))
         if self.fail_encode:
             Path(command[-1]).write_bytes(b"half")  # partial output must be cleaned up
             return subprocess.CompletedProcess(command, 1, "", "boom")
@@ -144,6 +146,23 @@ def test_no_ffmpeg_at_all(monkeypatch, fakes, tmp_path: Path) -> None:
         tts.synthesize_to_file("Hi.", tmp_path / "a.opus", fakes.voice, "opus", "32k")
 
 
+def test_ffmpeg_not_found_is_not_cached(monkeypatch, fakes) -> None:
+    """Installing ffmpeg while the app runs must work without a restart."""
+    candidates: list[str] = []
+    monkeypatch.setattr(tts, "_ffmpeg_candidates", lambda: list(candidates))
+    assert tts.check_environment()["ffmpeg"] is None
+    candidates.append("ffmpeg-bundled")
+    assert tts.check_environment()["ffmpeg"] == "ffmpeg-bundled"
+
+
+def test_ffmpeg_without_libopus_is_rechecked(monkeypatch, fakes) -> None:
+    ffmpeg = FakeFFmpeg({"ffmpeg-bundled": MP3_ONLY})
+    monkeypatch.setattr(tts.subprocess, "run", ffmpeg)
+    assert tts.check_environment()["opus"] is False
+    ffmpeg.encoders["ffmpeg-bundled"] = OPUS_AND_MP3  # e.g. user replaced ffmpeg
+    assert tts.check_environment()["opus"] is True
+
+
 # ---------------------------------------------------------------- synthesis
 
 
@@ -203,6 +222,31 @@ def test_ffmpeg_failure_leaves_no_partial_file(monkeypatch, fakes, tmp_path: Pat
     monkeypatch.setattr(tts.subprocess, "run", FakeFFmpeg({"ffmpeg-bundled": OPUS_AND_MP3}, fail_encode=True))
     out = tmp_path / "a.opus"
     with pytest.raises(tts.TTSError, match="ffmpeg failed"):
+        tts.synthesize_to_file("Hi.", out, fakes.voice, "opus", "32k")
+    assert not out.exists()
+    assert not (tmp_path / "a.opus.part").exists()
+
+
+def test_encode_has_a_timeout_scaled_to_audio_length(fakes, tmp_path: Path) -> None:
+    tts.synthesize_to_file("Hi.", tmp_path / "a.opus", fakes.voice, "opus", "32k")
+    assert fakes.ffmpeg.encode_timeouts == [tts._ENCODE_TIMEOUT_MIN_SEC]  # 1 s of audio -> the minimum
+
+    wav = tmp_path / "long.wav"
+    wav.write_bytes(b"wav")
+    tts._encode("ffmpeg-bundled", wav, tmp_path / "long.part", "opus", "32k", 2 * 3600.0)
+    assert fakes.ffmpeg.encode_timeouts[-1] == 2 * 3600.0  # a 2-hour chapter gets its own length
+
+
+def test_hung_ffmpeg_times_out_and_leaves_no_partial_file(monkeypatch, fakes, tmp_path: Path) -> None:
+    def hang(command, **kwargs):
+        if "-encoders" in command:
+            return subprocess.CompletedProcess(command, 0, OPUS_AND_MP3, "")
+        Path(command[-1]).write_bytes(b"half")
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    monkeypatch.setattr(tts.subprocess, "run", hang)
+    out = tmp_path / "a.opus"
+    with pytest.raises(tts.TTSError, match="ffmpeg timed out after 300s"):
         tts.synthesize_to_file("Hi.", out, fakes.voice, "opus", "32k")
     assert not out.exists()
     assert not (tmp_path / "a.opus.part").exists()

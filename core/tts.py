@@ -20,7 +20,6 @@ import subprocess
 import tempfile
 import threading
 import wave
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -36,6 +35,9 @@ _FORMATS = {
 _PARAGRAPH_SPLIT = re.compile(r"\n\s*\n")
 _PARAGRAPH_PAUSE_SEC = 0.4
 _PIPE_CHUNK = 64 * 1024
+# ffmpeg encode timeout: never less than this, and at least the audio's own length
+# (encoding is far faster than real time, so hitting it means ffmpeg is stuck).
+_ENCODE_TIMEOUT_MIN_SEC = 300
 
 _voice_cache: dict[str, Any] = {}
 _voice_lock = threading.Lock()
@@ -102,12 +104,35 @@ def _encoders(ffmpeg: str) -> str:
     return result.stdout
 
 
-@lru_cache(maxsize=1)
-def _detect_ffmpeg() -> tuple[str | None, frozenset[str]]:
-    """Find ffmpeg once. Prefer the first candidate with libopus (bundled, then PATH).
+_ffmpeg_lock = threading.Lock()
+_ffmpeg_good: tuple[str, frozenset[str]] | None = None
 
-    Returns (path or None, set of supported formats among ``_FORMATS``).
+
+def _reset_ffmpeg_cache() -> None:
+    """Forget the detected ffmpeg (for tests)."""
+    global _ffmpeg_good
+    with _ffmpeg_lock:
+        _ffmpeg_good = None
+
+
+def _detect_ffmpeg() -> tuple[str | None, frozenset[str]]:
+    """Find ffmpeg, preferring the first candidate with libopus (bundled, then PATH).
+
+    Returns (path or None, set of supported formats among ``_FORMATS``). Only a
+    complete result (ffmpeg with libopus) is cached; "not found" or "no libopus"
+    is re-checked on the next call, so installing ffmpeg needs no restart.
     """
+    global _ffmpeg_good
+    with _ffmpeg_lock:
+        if _ffmpeg_good is None:
+            found = _probe_ffmpeg()
+            if found[0] is None or "opus" not in found[1]:
+                return found
+            _ffmpeg_good = (found[0], found[1])
+        return _ffmpeg_good
+
+
+def _probe_ffmpeg() -> tuple[str | None, frozenset[str]]:
     first: tuple[str | None, frozenset[str]] = (None, frozenset())
     for ffmpeg in _ffmpeg_candidates():
         encoders = _encoders(ffmpeg)
@@ -243,7 +268,9 @@ def _synthesize_with_executable(
             raise TTSError(f"piper exited with code {process.returncode}: {detail}")
 
 
-def _encode(ffmpeg: str, wav_path: Path, part_path: Path, audio_format: str, bitrate: str) -> None:
+def _encode(
+    ffmpeg: str, wav_path: Path, part_path: Path, audio_format: str, bitrate: str, audio_sec: float
+) -> None:
     encoder, muxer = _FORMATS[audio_format]
     command = [
         ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
@@ -251,8 +278,11 @@ def _encode(ffmpeg: str, wav_path: Path, part_path: Path, audio_format: str, bit
         "-c:a", encoder, "-b:a", bitrate, "-ac", "1",
         "-f", muxer, str(part_path),
     ]  # fmt: skip
+    timeout = max(_ENCODE_TIMEOUT_MIN_SEC, audio_sec)
     try:
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as error:  # run() has already killed ffmpeg
+        raise TTSError(f"ffmpeg timed out after {timeout:.0f}s") from error
     except OSError as error:
         raise TTSError(f"Could not run ffmpeg: {error}") from error
     if result.returncode != 0:
@@ -314,7 +344,7 @@ def synthesize_to_file(text: str, out_path: Path, voice: str, audio_format: str,
                 frames, rate = wav_file.getnframes(), wav_file.getframerate()
             if frames == 0 or rate == 0:
                 raise TTSError("Piper produced no audio")
-            _encode(ffmpeg, wav_path, part_path, audio_format, bitrate)
+            _encode(ffmpeg, wav_path, part_path, audio_format, bitrate, frames / rate)
         os.replace(part_path, out_path)
     except TTSError:
         part_path.unlink(missing_ok=True)
