@@ -1,99 +1,95 @@
-"""Gutenberg text cleaning functions owned by CP1C."""
+"""Gutenberg text cleaning functions (CP1C; integration fixes by Claude Code).
+
+Rules are specified in docs/CHECKPOINTS.md, CP1C.
+"""
 
 import re
 
+_START = re.compile(r"^\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*$", re.IGNORECASE | re.MULTILINE)
+_END = re.compile(r"^\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*$", re.IGNORECASE | re.MULTILINE)
+_PRODUCER = re.compile(r"^(Produced by|E-text prepared by|Transcribed by)", re.IGNORECASE)
+_PRODUCER_WINDOW = 40
+
+_PARAGRAPH_SPLIT = re.compile(r"\n\s*\n")
+_ILLUSTRATION = re.compile(r"\[Illustration[^\]]*\]", re.IGNORECASE)
+_FOOTNOTE = re.compile(r"\[\d+\]")
+_ITALICS = re.compile(r"_([^_]+)_")
+_SCENE_BREAK = re.compile(r"^[\s*\-=]*$")
+_DASHES = re.compile(r"-{2,}")
+_DOUBLED_COMMA = re.compile(r",(\s*,)+")
+_SPACE_BEFORE_COMMA = re.compile(r"\s+,")
+_COMMA_BEFORE_STOP = re.compile(r",\s*([.;:!?])")
+_COMMA_AFTER_STOP = re.compile(r"([.;:!?]),")
+
 
 def strip_gutenberg_boilerplate(raw: str) -> str:
-    """Remove Project Gutenberg boilerplate."""
-    # 1. Normalize line endings and remove BOM
+    """Remove the Project Gutenberg header, footer and producer credits."""
+    # 1. Normalize line endings; drop a leading BOM.
     text = raw.replace("\r\n", "\n").replace("\r", "\n")
     if text.startswith("\ufeff"):
         text = text[1:]
 
-    # 2. Find START marker
-    start_pattern = re.compile(
-        r"^\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*$",
-        re.IGNORECASE | re.MULTILINE
-    )
-    start_match = start_pattern.search(text)
-    if start_match:
-        text = text[start_match.end():]
+    # 2. Keep only text after the START line (if any).
+    start = _START.search(text)
+    if start:
+        text = text[start.end():]
 
-    # 3. Find END marker
-    end_pattern = re.compile(
-        r"^\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*$",
-        re.IGNORECASE | re.MULTILINE
-    )
-    end_match = end_pattern.search(text)
-    if end_match:
-        text = text[:end_match.start()]
+    # 3. Keep only text before the END line (if any).
+    end = _END.search(text)
+    if end:
+        text = text[: end.start()]
 
-    # 4. Remove producer lines and following lines until blank line in first 40 lines
-    lines = text.split("\n")
-    first_40 = lines[:40]
-    producer_pattern = re.compile(
-        r"^(Produced by|E-text prepared by|Transcribed by)",
-        re.IGNORECASE
-    )
-    result_lines = []
-    skip_until_blank = False
-    for i, line in enumerate(lines):
-        if i < len(first_40):
-            if skip_until_blank:
-                if line.strip() == "":
-                    skip_until_blank = False
+    # 4. A producer line that starts within the first 40 lines is removed together
+    #    with the lines directly after it, up to (not including) the next blank line.
+    kept: list[str] = []
+    skipping = False
+    for number, line in enumerate(text.split("\n")):
+        if skipping:
+            if line.strip():
                 continue
-            if producer_pattern.match(line):
-                skip_until_blank = True
-                continue
-        result_lines.append(line)
+            skipping = False
+        elif number < _PRODUCER_WINDOW and _PRODUCER.match(line):
+            skipping = True
+            continue
+        kept.append(line)
 
-    text = "\n".join(result_lines)
+    # 5. Strip surrounding whitespace.
+    return "\n".join(kept).strip()
 
-    # 5. Strip leading/trailing whitespace
-    text = text.strip()
 
-    return text
+def _fix_dashes(paragraph: str) -> str:
+    paragraph = _DASHES.sub(", ", paragraph)
+    paragraph = _DOUBLED_COMMA.sub(",", paragraph)  # ", ," / ",," -> ","
+    paragraph = _SPACE_BEFORE_COMMA.sub(",", paragraph)  # " ," -> ","
+    paragraph = _COMMA_BEFORE_STOP.sub(r"\1", paragraph)  # "word--." -> "word."
+    paragraph = _COMMA_AFTER_STOP.sub(r"\1", paragraph)  # "Mr. ----" -> "Mr."
+    return paragraph.lstrip(", ")  # a paragraph that opened with "--"
 
 
 def clean_for_speech(text: str) -> str:
-    """Normalize text for speech synthesis."""
-    # 1. Split into paragraphs on one or more blank lines
-    paragraphs = re.split(r"\n\s*\n", text)
-
-    cleaned_paragraphs = []
-
-    for paragraph in paragraphs:
-        # 2. Join lines with single space and collapse runs of spaces/tabs
-        paragraph = re.sub(r"\s+", " ", paragraph).strip()
-
-        # 3. Remove [Illustration...] blocks and footnote markers
-        paragraph = re.sub(r"\[Illustration[^\]]*\]", "", paragraph, flags=re.IGNORECASE)
-        paragraph = re.sub(r"\[\d+\]", "", paragraph)
-
-        # 4. Remove underscores used for italics
-        paragraph = re.sub(r"_([^_]+)_", r"\1", paragraph)
-
-        # 5. Replace -- with comma, then fix doubled punctuation and space-before-punctuation
-        paragraph = paragraph.replace("--", ", ")
-        paragraph = re.sub(r"\s*,\s*", ", ", paragraph)
-        paragraph = re.sub(r"\s*,", ",", paragraph)
-
-        # Clean up multiple spaces that might have been introduced
-        paragraph = re.sub(r"\s+", " ", paragraph).strip()
-
-        # 6. Drop empty paragraphs or scene-break paragraphs
-        if paragraph.strip() == "":
+    """Normalize book text so Piper reads it naturally."""
+    cleaned: list[str] = []
+    # 1. Paragraphs are separated by one or more blank lines.
+    for paragraph in _PARAGRAPH_SPLIT.split(text):
+        # 2. Unwrap hard wraps; collapse whitespace runs.
+        paragraph = " ".join(paragraph.split())
+        # 3. Drop illustrations and footnote markers.
+        paragraph = _ILLUSTRATION.sub("", paragraph)
+        paragraph = _FOOTNOTE.sub("", paragraph)
+        # 4. Underscore italics: _word_ -> word.
+        paragraph = _ITALICS.sub(r"\1", paragraph)
+        # 5. Drop empty and scene-break paragraphs (only *, -, = and spaces).
+        #    Checked BEFORE the dash rule so "-----" is never turned into commas.
+        if _SCENE_BREAK.match(paragraph):
             continue
-        if re.match(r"^[\s\*\-\=]+$", paragraph):
-            continue
-
-        cleaned_paragraphs.append(paragraph)
-
-    # 7. Rejoin paragraphs
-    return "\n\n".join(cleaned_paragraphs)
+        # 6. "--" -> ", " and tidy the commas it creates. Other commas ("1,000") are untouched.
+        paragraph = " ".join(_fix_dashes(paragraph).split())
+        if paragraph:
+            cleaned.append(paragraph)
+    # 7. Rejoin; headings stay as their own short paragraphs.
+    return "\n\n".join(cleaned)
 
 
 def clean(raw: str) -> str:
-    """Strip boilerplate and normalize text for speech."""
+    """Strip boilerplate, then normalize for speech."""
     return clean_for_speech(strip_gutenberg_boilerplate(raw))

@@ -105,7 +105,7 @@ Implement **exactly** these rules. Do not add extra behavior.
 1. Normalize line endings to `\n`. Remove a leading BOM (`\ufeff`).
 2. Find the first line matching regex `^\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*$` (case-insensitive, multiline). Keep only text **after** that line. If not found, keep from the start.
 3. Find the first line matching `^\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*$` (case-insensitive). Keep only text **before** it. If not found, keep to the end.
-4. In the first 40 lines of what remains, remove lines starting with `Produced by`, `E-text prepared by`, or `Transcribed by` (case-insensitive), plus any lines directly after them until the next blank line.
+4. In the first 40 lines of what remains, remove lines starting with `Produced by`, `E-text prepared by`, or `Transcribed by` (case-insensitive), plus any lines directly after them up to (not including) the next blank line. A block that starts within the first 40 lines is removed in full even if it runs past line 40.
 5. Strip leading/trailing whitespace of the whole result.
 
 **`clean_for_speech(text)`**
@@ -113,26 +113,29 @@ Implement **exactly** these rules. Do not add extra behavior.
 2. Within each paragraph, join lines with a single space (unwrap hard wraps) and collapse runs of spaces/tabs to one space.
 3. Remove `[Illustration...]` blocks (regex `\[Illustration[^\]]*\]`, case-insensitive) and footnote markers like `[1]`, `[23]` (regex `\[\d+\]`).
 4. Remove underscores used for italics: `_word_` → `word` (regex `_([^_]+)_` → `\1`).
-5. Replace `--` with `, ` then fix doubled punctuation `, ,` → `,` and space-before-punctuation ` ,` → `,`.
-6. Drop paragraphs that are empty after cleaning, or that consist only of `*`, `-`, `=` characters and spaces (scene-break rules).
+5. Drop paragraphs that are empty, or that consist only of `*`, `-`, `=` characters and spaces (scene-break rules). This runs **before** rule 6, so `-----` is dropped instead of becoming commas.
+6. Replace each run of two or more dashes (`--`, `----`) with `, `, then tidy only the commas that creates: `, ,` / `,,` → `,`; ` ,` → `,`; a comma directly before `.;:!?` is removed (`Wait--.` → `Wait.`); a comma directly after `.;:!?` is removed (`Mr. ----` → `Mr.`); a leading `, ` is removed. Do **not** touch other commas: `1,000` and `"Hello," he said` stay exactly as they are. Collapse spaces again and drop the paragraph if it is now empty.
 7. Rejoin paragraphs with `\n\n`. Keep headings as their own paragraphs (they're just short paragraphs).
 
 **`split_chapters(text)`** (input is cleaned text: paragraphs separated by `\n\n`)
-1. A paragraph is a **heading** if it is ≤ 80 characters and matches (case-insensitive) either:
-   - `^(chapter|book|part|volume|letter)\s+([ivxlcdm]+|\d+|[a-z]+(-[a-z]+)?)\b.*$`, or
-   - `^([ivxlcdm]+|\d+)\.?$` (a bare Roman or Arabic numeral)
-2. Walk paragraphs. Each heading starts a new section; its title is the heading text (strip trailing `.`). Paragraphs before the first heading form a section titled `"Opening"`.
-3. **Merge tiny sections:** any section whose body has fewer than 50 words is merged **into the next** section: the next section's title becomes `"<tiny title> — <next title>"` and the tiny body (if any) is prepended. (This absorbs tables of contents and "PART ONE" + "CHAPTER I" stacks.) If the last section is tiny, merge it into the previous one instead (keep the previous title).
-4. **Fallback / oversize:** if there are fewer than 2 sections, or any section has more than 15,000 words, split that section's body at paragraph boundaries into parts of ~5,000 words (a part ends at the first paragraph boundary after reaching 5,000 words). Titles: `"<title>, part 1"`, `"<title>, part 2"`… (for the whole-book fallback, title is `"Part 1"`, `"Part 2"`…).
-5. Title-case headings that are ALL CAPS (`"CHAPTER I"` → `"Chapter I"`); leave Roman numerals uppercase (`I`, `IV`, `XII`).
-6. Return `[(title, body_text)]` with bodies joined by `\n\n`. Never return an empty list; never return an empty body.
+1. A paragraph is a **heading** if it is ≤ 80 characters and is one of:
+   - **Keyword + numeral**, case-insensitive: `chapter|book|part|volume|letter`, whitespace, an optional `the `, then a **numeral** (a Roman numeral `[ivxlcdm]+`, digits, or a number word such as `one`…`twenty`, `thirty`…`hundred`, `first`…`twentieth`, `last`, `final`, optionally compound like `twenty-one` / `twenty one`). After the numeral there must be either nothing, or a separator (`.` `:` `-` `–` `—`) followed by a subtitle. Examples: `Chapter 1`, `Letter 4`, `Chapter the First`, `Chapter I. The Arrival`, `Volume II — Notes`.
+   - The same keyword + numeral followed by any subtitle **if the paragraph has no lowercase letters** (`CHAPTER I THE ARRIVAL`).
+   - A bare numeral: digits, or an **uppercase** Roman numeral, with an optional trailing `.` (`IV`, `XII.`, `42`).
 
-**`progress.py`** exactly per ARCHITECTURE §5.
+   Not headings (ordinary prose): `Part of me wanted to stay.`, `Book him, Danno.`, `Part I of my life was hard.`, `Book two was better.`, `did.`
+2. Walk paragraphs. Each heading starts a new section, **even if no text follows it before the next heading** (an empty section); its title is the heading text (strip trailing `.`). Paragraphs before the first heading form a section titled `"Opening"` (omitted if there are none).
+3. **Merge tiny sections:** any section whose body has fewer than 50 words is merged **into the next** section: the next section's title becomes `"<tiny title> — <next title>"` and the tiny body (if any) is prepended. Merging **cascades**: if the merged section is still under 50 words it merges into the next one too, so `PART ONE` + `CHAPTER I` gives `"Part One — Chapter I"` and a run of tiny sections becomes one title. If the last section is still tiny, merge its body into the previous one and **keep the previous title unchanged**.
+4. **Fallback / oversize:** if there are fewer than 2 sections (whole-book fallback), or a section has more than 15,000 words, split that section's body at paragraph boundaries into parts: a part ends at the first paragraph boundary **at or after** 5,000 words (so parts are ≥ 5,000 words, except the last). Titles: `"<title>, part 1"`, `"<title>, part 2"`…; for the whole-book fallback, `"Part 1"`, `"Part 2"`…. If splitting yields only one part, keep the section unchanged. A single paragraph is never cut.
+5. Title-case headings that are ALL CAPS (`"CHAPTER I"` → `"Chapter I"`, `"CHAPTER THE FIRST"` → `"Chapter the First"`); keep the heading's Roman numeral uppercase (`Chapter XII`, bare `IV`). Other words are title-cased even if they look like Roman numerals (`THE DIM MIX` → `The Dim Mix`). Headings that already contain lowercase letters are left alone.
+6. Return `[(title, body_text)]` with bodies joined by `\n\n`. Never return an empty list; never return an empty body (if a section has no text at all, e.g. empty input, its body is its title).
+
+**`progress.py`** exactly per ARCHITECTURE §5. "Corrupt" includes unreadable files, invalid JSON, non-UTF-8 bytes, and JSON that is not an object (`[]`, `null`); each returns `Progress()`. A field with the wrong type or range (e.g. `"speed": "fast"`, negative position) falls back to that field's default. `save_progress` must not modify the object passed in.
 
 **Fixtures & tests**
-- `tests/fixtures/sample_book.txt`: ~60 lines, fake Gutenberg header + footer, "Produced by" line, a 4-entry table of contents, `PART ONE`, `CHAPTER I`, `CHAPTER II`, `CHAPTER III` with a few hundred words each (use lorem-style filler), an `[Illustration: x]`, a `_italic_` word, a `--`.
+- `tests/fixtures/sample_book.txt`: ~150 lines, fake Gutenberg header + footer, "Produced by" line, a 4-entry table of contents, `PART ONE`, `CHAPTER I`, `CHAPTER II`, `CHAPTER III` with a few hundred words each (use lorem-style filler), an `[Illustration: x]`, a `_italic_` word, a `--`.
 - `tests/fixtures/no_chapters.txt`: header/footer + ~12,000 words of filler paragraphs, no headings.
-- Tests: boilerplate removed; illustration/footnote/underscore removed; hard wraps unwrapped; TOC merged (first chapter title contains "Chapter I"); `no_chapters.txt` → 3 parts; progress save/load round-trip; corrupt progress.json → default; `newer()` picks later timestamp.
+- Tests: boilerplate removed; illustration/footnote/underscore removed; hard wraps unwrapped; TOC merged (first chapter title contains "Chapter I"); `no_chapters.txt` → exactly `"Part 1"`, `"Part 2"`, `"Part 3"`; progress save/load round-trip; corrupt progress.json (`[]`, `null`, non-UTF-8) → default; `newer()` picks later timestamp. **Tests must check the actual output text, not just counts** (e.g. no single-character paragraphs, `1,000` survives, every source paragraph appears exactly once).
 
 **Acceptance criteria:** `pytest tests/test_text_cleaner.py tests/test_chapters.py tests/test_progress.py` passes. Only owned files changed.
 

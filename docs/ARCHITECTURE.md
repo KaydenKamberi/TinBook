@@ -168,8 +168,8 @@ See CP1C for exact rules.
 
 ### `core/progress.py` (CP1C)
 ```python
-def load_progress(book_dir: Path) -> Progress          # default Progress() if file missing/corrupt
-def save_progress(book_dir: Path, progress: Progress) -> Progress   # sets updated_at=now_iso(), atomic write, returns saved copy
+def load_progress(book_dir: Path) -> Progress          # default Progress() if file missing/corrupt (bad JSON, non-UTF-8, not an object); bad field types -> that field's default
+def save_progress(book_dir: Path, progress: Progress) -> Progress   # sets updated_at=now_iso(), atomic write, returns a new saved copy (the argument is not modified)
 def newer(a: Progress, b: Progress) -> Progress        # the one with the later updated_at ("" is oldest); tie -> a
 ```
 Note: takes a `book_dir` Path (not a book id) so it works on desktop and device with no config dependency. Uses `core.library.write_json_atomic` — if CP1B isn't merged yet, implement a private `_write_json_atomic` with identical behavior.

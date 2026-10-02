@@ -1,191 +1,141 @@
-"""Chapter detection functions owned by CP1C."""
+"""Chapter detection (CP1C; integration fixes by Claude Code).
+
+Rules are specified in docs/CHECKPOINTS.md, CP1C.
+"""
 
 import re
 
+MAX_HEADING_CHARS = 80
+TINY_WORDS = 50  # sections with fewer body words are merged
+OVERSIZE_WORDS = 15_000  # sections with more body words are split
+PART_WORDS = 5_000  # a part ends at the first paragraph boundary at/after this many words
+
+_KEYWORD = r"chapter|book|part|volume|letter"
+_ROMAN = r"[ivxlcdm]+"
+_NUMBER_WORD = (
+    r"one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|"
+    r"fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|"
+    r"eighty|ninety|hundred|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|"
+    r"tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|"
+    r"eighteenth|nineteenth|twentieth|thirtieth|fortieth|fiftieth|last|final"
+)
+_NUMERAL = rf"{_ROMAN}|\d+|(?:{_NUMBER_WORD})(?:[-\s](?:{_NUMBER_WORD}))?"
+# "<keyword> [the] <numeral>", then nothing, or a separator (. : - – —) and a subtitle.
+_KEYWORD_HEADING = re.compile(rf"^(?:{_KEYWORD})\s+(?:the\s+)?(?:{_NUMERAL})(?:\s*[.:\-–—].*)?$", re.IGNORECASE)
+# Same prefix followed by any subtitle, allowed only when the paragraph has no lowercase letters.
+_KEYWORD_HEADING_CAPS = re.compile(rf"^(?:{_KEYWORD})\s+(?:the\s+)?(?:{_NUMERAL})\b.*$", re.IGNORECASE)
+# A bare numeral: Arabic, or UPPERCASE Roman ("did." or "mix" are words, not headings).
+_BARE_NUMERAL = re.compile(r"^(?:[IVXLCDM]+|\d+)\.?$")
+_KEYWORD_THE = re.compile(rf"^((?:{_KEYWORD})\s+)The\b", re.IGNORECASE)
+# A word for title-casing; keeps "DON'T" -> "Don't".
+_WORD = re.compile(r"[^\W\d_]+(?:'[^\W\d_]+)*")
+# The Roman numeral after the keyword, kept uppercase when title-casing.
+_NUMERAL_TOKEN = re.compile(rf"^((?:{_KEYWORD})\s+(?:the\s+)?)({_ROMAN})\b", re.IGNORECASE)
+
+
+def _words(paragraphs: list[str]) -> int:
+    return sum(len(p.split()) for p in paragraphs)
+
+
+def _is_heading(paragraph: str) -> bool:
+    """True if a cleaned paragraph is a chapter/part heading (CP1C rule 1)."""
+    text = paragraph.strip()
+    if not text or len(text) > MAX_HEADING_CHARS:
+        return False
+    if _BARE_NUMERAL.match(text) or _KEYWORD_HEADING.match(text):
+        return True
+    return text == text.upper() and bool(_KEYWORD_HEADING_CAPS.match(text))
+
+
+def _title_case(heading: str) -> str:
+    """Title-case an ALL-CAPS heading; its Roman numeral stays uppercase (rule 5)."""
+    if any(c.islower() for c in heading) or _BARE_NUMERAL.match(heading):
+        return heading
+    titled = _WORD.sub(lambda m: m.group(0).capitalize(), heading)
+    titled = _KEYWORD_THE.sub(r"\1the", titled)  # "Chapter The First" -> "Chapter the First"
+    numeral = _NUMERAL_TOKEN.match(titled)
+    if numeral:
+        titled = titled[: numeral.start(2)] + numeral.group(2).upper() + titled[numeral.end(2) :]
+    return titled
+
+
+def _sections(paragraphs: list[str]) -> list[tuple[str, list[str]]]:
+    """Rule 2: each heading starts a section; text before the first heading is "Opening"."""
+    sections: list[tuple[str, list[str]]] = []
+    title, body = "Opening", []
+    started = False  # an empty "Opening" (book starts with a heading) is not a section
+    for paragraph in paragraphs:
+        if _is_heading(paragraph):
+            if started or body:
+                sections.append((title, body))
+            title, body, started = _title_case(paragraph.strip().rstrip(".")), [], True
+        else:
+            body.append(paragraph)
+    if started or body:
+        sections.append((title, body))
+    return sections
+
+
+def _merge_tiny(sections: list[tuple[str, list[str]]]) -> list[tuple[str, list[str]]]:
+    """Rule 3: a section under 50 words merges into the next one, cascading.
+
+    The merged title is "<tiny> — <next>". A tiny last section merges into the
+    previous one, which keeps its title.
+    """
+    merged: list[tuple[str, list[str]]] = []
+    carry: tuple[str, list[str]] | None = None
+    for title, body in sections:
+        if carry is not None:
+            title, body = f"{carry[0]} — {title}", carry[1] + body
+            carry = None
+        if _words(body) < TINY_WORDS:
+            carry = (title, body)
+        else:
+            merged.append((title, body))
+    if carry is not None:
+        if merged:
+            previous_title, previous_body = merged[-1]
+            merged[-1] = (previous_title, previous_body + carry[1])
+        else:
+            merged.append(carry)
+    return merged
+
+
+def _split_parts(paragraphs: list[str]) -> list[list[str]]:
+    """A part ends at the first paragraph boundary at or after PART_WORDS words."""
+    parts: list[list[str]] = []
+    current: list[str] = []
+    count = 0
+    for paragraph in paragraphs:
+        current.append(paragraph)
+        count += len(paragraph.split())
+        if count >= PART_WORDS:
+            parts.append(current)
+            current, count = [], 0
+    if current:
+        parts.append(current)
+    return parts
+
 
 def split_chapters(text: str) -> list[tuple[str, str]]:
-    """Split cleaned book text into titled chapters."""
-    # Split into paragraphs on double newlines
-    paragraphs = text.split("\n\n")
+    """Split cleaned text (paragraphs separated by blank lines) into [(title, body)]."""
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    sections = _merge_tiny(_sections(paragraphs)) or [("Opening", [])]
 
-    # Define heading patterns
-    heading_pattern1 = re.compile(
-        r"^(chapter|book|part|volume|letter)\s+([ivxlcdm]+|\d+|[a-z]+(-[a-z]+)?)\b.*$",
-        re.IGNORECASE
-    )
-    heading_pattern2 = re.compile(
-        r"^([ivxlcdm]+|\d+)\.?$",
-        re.IGNORECASE
-    )
-
-    def is_heading(para: str) -> bool:
-        para = para.strip()
-        if len(para) > 80:
-            return False
-        return bool(heading_pattern1.match(para) or heading_pattern2.match(para))
-
-    # Step 1: Identify sections
-    sections = []
-    current_title = "Opening"
-    current_body_paragraphs = []
-
-    for paragraph in paragraphs:
-        stripped = paragraph.strip()
-        if not stripped:
+    # Rule 4: whole-book fallback (fewer than 2 sections) or oversize sections.
+    result: list[tuple[str, list[str]]] = []
+    whole_book = len(sections) < 2
+    for title, body in sections:
+        if not whole_book and _words(body) <= OVERSIZE_WORDS:
+            result.append((title, body))
             continue
-
-        if is_heading(stripped):
-            # Start new section
-            if current_body_paragraphs:
-                sections.append((current_title, current_body_paragraphs))
-            # New title: strip trailing period
-            new_title = stripped.rstrip(".")
-            current_title = new_title
-            current_body_paragraphs = []
+        parts = _split_parts(body)
+        if len(parts) < 2:
+            result.append((title, body))
+        elif whole_book:
+            result.extend((f"Part {n}", part) for n, part in enumerate(parts, 1))
         else:
-            current_body_paragraphs.append(paragraph)
+            result.extend((f"{title}, part {n}", part) for n, part in enumerate(parts, 1))
 
-    # Don't forget the last section
-    if current_body_paragraphs:
-        sections.append((current_title, current_body_paragraphs))
-    elif sections:  # Last paragraph was a heading with no body
-        sections.append((current_title, []))
-
-    # If no sections at all, create one with "Opening"
-    if not sections:
-        sections.append(("Opening", []))
-
-    # Step 2: Merge tiny sections (< 50 words)
-    def word_count(paras):
-        total = 0
-        for p in paras:
-            total += len(p.split())
-        return total
-
-    merged_sections = []
-    i = 0
-    while i < len(sections):
-        title, body_paras = sections[i]
-        wc = word_count(body_paras)
-
-        if wc < 50:
-            # Tiny section - merge into next or previous
-            if i < len(sections) - 1:
-                # Merge into next
-                next_title, next_body = sections[i + 1]
-                new_title = f"{title} — {next_title}"
-                merged_sections.append((new_title, body_paras + next_body))
-                i += 2  # Skip next section
-            else:
-                # Last section is tiny - merge into previous
-                if merged_sections:
-                    prev_title, prev_body = merged_sections[-1]
-                    new_title = f"{prev_title} — {title}"
-                    merged_sections[-1] = (new_title, prev_body + body_paras)
-                else:
-                    # Only one section and it's tiny
-                    merged_sections.append((title, body_paras))
-                i += 1
-        else:
-            merged_sections.append((title, body_paras))
-            i += 1
-
-    # Step 3: Fallback / oversize check
-    # "if there are fewer than 2 sections, or any section has more than 15,000 words"
-    # This means: if (fewer than 2 sections) OR (any section > 15000 words), split
-    needs_split = len(merged_sections) < 2
-    if not needs_split:
-        # Check if any section has > 15000 words
-        for title, body_paras in merged_sections:
-            if word_count(body_paras) > 15000:
-                needs_split = True
-                break
-
-    if needs_split:
-        # Split all sections that need it
-        final_sections = []
-        for title, body_paras in merged_sections:
-            wc = word_count(body_paras)
-            if len(merged_sections) < 2 or wc > 15000:
-                final_sections.extend(_split_oversized(title, body_paras, 5000))
-            else:
-                final_sections.append((title, body_paras))
-        merged_sections = final_sections
-
-    # Step 4: Title-case ALL CAPS headings, keep Roman numerals uppercase
-    def fix_title_case(title: str) -> str:
-        # Check if title is ALL CAPS (excluding spaces and hyphens)
-        alpha_chars = [c for c in title if c.isalpha()]
-        if alpha_chars and all(c.isupper() for c in alpha_chars):
-            # Split into words and title-case
-            words = title.split()
-            result_words = []
-            for word in words:
-                # Check if word is a Roman numeral (all uppercase letters, no lowercase)
-                if word.isupper() and re.match(r"^[IVXLCDM]+$", word):
-                    result_words.append(word)
-                else:
-                    # Title case: capitalize first letter, lowercase rest
-                    if word:
-                        result_words.append(word[0].upper() + word[1:].lower())
-                    else:
-                        result_words.append(word)
-            return " ".join(result_words)
-        return title
-
-    result = []
-    for title, body_paras in merged_sections:
-        fixed_title = fix_title_case(title)
-        body_text = "\n\n".join(body_paras)
-        if not body_text:
-            # If body is empty, use the title as body to satisfy "never empty body"
-            body_text = fixed_title
-        result.append((fixed_title, body_text))
-
-    return result
-
-
-def _split_oversized(title: str, body_paras: list[str], target_words: int) -> list[tuple[str, str]]:
-    """Split a section's body into parts of approximately target_words."""
-    if not body_paras:
-        return [(title, title)]
-
-    parts = []
-    current_paras = []
-    current_word_count = 0
-
-    for para in body_paras:
-        para_wc = len(para.split())
-        if current_word_count + para_wc > target_words and current_paras:
-            # End current part
-            parts.append((list(current_paras), current_word_count))
-            current_paras = []
-            current_word_count = 0
-        current_paras.append(para)
-        current_word_count += para_wc
-
-    # Don't forget the last part
-    if current_paras:
-        parts.append((list(current_paras), current_word_count))
-
-    # If we ended up with no parts (shouldn't happen), add one
-    if not parts and body_paras:
-        parts.append((list(body_paras), sum(len(p.split()) for p in body_paras)))
-
-    # Create result with numbered titles
-    # If only 1 part, return as single section
-    if len(parts) <= 1:
-        body_text = "\n\n".join(body_paras)
-        if not body_text:
-            body_text = title
-        return [(title, body_text)]
-
-    result = []
-    for i, (paras, _) in enumerate(parts):
-        part_title = f"{title}, part {i + 1}"
-        body_text = "\n\n".join(paras)
-        if not body_text:
-            body_text = part_title
-        result.append((part_title, body_text))
-
-    return result
+    # Rule 6: bodies joined by blank lines, never empty.
+    return [(title, "\n\n".join(body) or title) for title, body in result]

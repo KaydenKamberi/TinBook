@@ -1,58 +1,150 @@
-The Project Gutenberg Ebook of Sample Book, by Test Author
+The Project Gutenberg eBook of Sample Book
 
 This ebook is for the use of anyone anywhere in the United States and
 most other parts of the world at no cost and with almost no restrictions
-whatsoever.  You may copy it, give it away or reuse it under the terms
-of the Project Gutenberg License included with this ebook or online at
-www.gutenberg.org.  If you are not located in the United States, you
-will have to check the laws of the country where you are located before
-using this Ebook.
-
+whatsoever. You may copy it, give it away or re-use it under the terms
+of the Project Gutenberg License included with this ebook or online
+at www.gutenberg.org.
 
 Title: Sample Book
+
 Author: Test Author
-Release Date: January 1, 2024
-Etext prepared by John Doe
-Produced by Jane Smith
-Transcribed by Bob Johnson
+
+Release date: January 1, 2024 [eBook #99999]
+
+Language: English
 
 
 *** START OF THE PROJECT GUTENBERG EBOOK SAMPLE BOOK ***
 
 
-Produced by Jane Smith
-E-text prepared by John Doe
-
+Produced by Jane Smith, Bob Johnson and the Online
+Distributed Proofreading Team at https://www.pgdp.net
 
 CONTENTS
 
-I. Chapter One
-II. Chapter Two
-III. Chapter Three
-IV. Chapter Four
-
+PART ONE
+CHAPTER I. The Arrival
+CHAPTER II. The Letter
+CHAPTER III. The Departure
 
 PART ONE
 
 CHAPTER I
 
-This is the first chapter of the sample book. It contains some text that will be used for testing the chapter splitting functionality. There are several paragraphs here to make sure everything works correctly.
+This is the first chapter. Cupidatat laborum minim commodo duis
+incididunt do cupidatat labore do! Qui veniam nostrud proident officia
+cillum ex minim est? Minim dolor consequat proident sit incididunt
+velit commodo fugiat do consectetur consequat consectetur ipsum
+tempor. Quis est elit occaecat mollit dolor eiusmod do cillum laborum
+cupidatat magna esse. Nulla sed ullamco occaecat do cupidatat qui
+consectetur adipiscing cillum ipsum tempor. Elit enim mollit dolor
+occaecat dolore labore laboris magna consequat adipiscing enim qui do
+minim? Quis reprehenderit exercitation excepteur excepteur aliquip
+consectetur irure sed exercitation excepteur. Ipsum ea id minim minim
+do aliqua commodo amet.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+[Illustration: The arrival at the inn]
 
-This paragraph has an [Illustration: test image] that should be removed. Also some _italic_ text that needs to be cleaned. And a dash--test that should become a comma.
+The innkeeper asked for 1,000 crowns--an absurd sum--and the
+_traveller_ laughed.[1] Ipsum nulla ut ad aliquip adipiscing ipsum
+magna do ullamco qui elit fugiat? Aliquip et ullamco aliqua pariatur
+qui ut do elit cillum aliquip nisi cillum? Nisi proident ea deserunt
+et qui incididunt magna qui tempor ad aliqua lorem in est deserunt? Ad
+ea sit velit pariatur lorem id ullamco occaecat esse proident minim
+ipsum id? Excepteur tempor aliquip tempor nisi ex ullamco fugiat
+aliquip ut exercitation et non eiusmod id cillum? Commodo et minim
+aliquip dolor enim est sint excepteur. Amet sed incididunt tempor
+ullamco velit exercitation exercitation sint ea. Nulla proident mollit
+cillum reprehenderit minim eiusmod id eiusmod excepteur sit officia.
+
+Irure esse non est cillum nisi lorem ea cillum sint elit. Eiusmod
+laboris elit mollit cillum ea est cupidatat aute qui laborum labore
+sit reprehenderit in magna! Laborum nisi ad consectetur velit nostrud
+ullamco nulla. Id pariatur nostrud voluptate aliqua commodo proident
+nostrud excepteur tempor exercitation amet laboris adipiscing cillum.
+Mollit eiusmod sunt officia amet veniam et aliquip nulla occaecat ea
+ipsum esse. Quis voluptate velit voluptate exercitation dolor enim
+fugiat laborum dolor fugiat do elit irure. Deserunt incididunt commodo
+culpa in sit enim fugiat laborum non. Ea occaecat ad incididunt
+consectetur laboris nostrud irure nostrud ex!
 
 CHAPTER II
 
-This is the second chapter. It continues the story with more text and different content. The chapter splitting should handle this properly.
+This is the second chapter. Irure quis tempor lorem elit dolor nulla
+proident cupidatat laborum sed amet laboris aliqua. Officia proident
+enim excepteur ea duis pariatur duis ullamco proident sit. Qui nostrud
+ullamco labore excepteur eiusmod est elit sed ipsum irure in? Lorem
+enim non aliqua exercitation deserunt cupidatat labore! Nostrud id
+aliquip magna nostrud est deserunt aute esse. Non velit in culpa velit
+dolore eiusmod dolor ullamco sunt quis sed pariatur! Deserunt officia
+dolor magna nostrud proident sed laboris tempor nostrud in nostrud
+commodo lorem aliqua consectetur? Aliqua adipiscing nulla culpa nulla
+ullamco adipiscing do non consectetur duis esse culpa ipsum aliquip
+sit.
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae.
+Laborum voluptate nisi proident exercitation est ex adipiscing mollit
+anim irure? Non aute ex sunt lorem ipsum tempor mollit ea culpa anim
+nisi? Est officia anim magna velit laborum anim dolor sit consectetur
+adipiscing proident excepteur reprehenderit adipiscing proident!
+Fugiat velit duis commodo et pariatur exercitation non nulla et
+officia est culpa? Laborum exercitation id deserunt magna quis lorem
+id velit dolore nostrud incididunt eiusmod aliquip proident do.
+Occaecat voluptate nulla ad culpa magna aliqua eiusmod irure aute?
+Aliqua laborum exercitation tempor cillum minim dolore sunt ut mollit
+magna deserunt in exercitation dolore non.
+
+* * * * *
+
+-----
+
+Nisi eiusmod et commodo aliqua nisi cupidatat officia! Duis magna
+fugiat cupidatat sunt est tempor do nisi ad. Adipiscing mollit aliqua
+nisi non duis nulla ipsum elit non occaecat ea aliquip amet adipiscing
+reprehenderit! Elit minim fugiat sed tempor ipsum enim consequat
+consectetur amet voluptate enim ex. In lorem voluptate ad excepteur
+dolore commodo aliqua enim! Nisi deserunt consequat commodo proident
+minim ut aliquip voluptate. Voluptate non esse tempor pariatur aliquip
+exercitation est ad labore laborum officia quis quis ad labore.
 
 CHAPTER III
 
-The third chapter is here. More content follows below.
+This is the third chapter. Excepteur adipiscing enim ut sit proident
+ex enim irure. Commodo anim laboris duis laboris et qui sint ea
+nostrud fugiat magna deserunt elit laboris proident. Reprehenderit
+duis ad reprehenderit veniam do laborum labore ad lorem velit! Fugiat
+sed exercitation magna exercitation commodo officia nulla in. Aute
+occaecat quis laborum excepteur cupidatat labore aliquip! Sint
+reprehenderit duis consequat eiusmod velit laboris occaecat quis ex
+consectetur dolore amet. Lorem id aliqua laborum tempor lorem enim
+ullamco. Consectetur laboris aute tempor minim voluptate dolore nisi
+aute? Voluptate sit officia irure id elit esse in ea et non!
 
-Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem.
+Deserunt ipsum aute ea aliqua ad et aute amet voluptate. Voluptate
+elit dolor officia laborum qui consectetur est amet aute culpa
+proident. Consectetur cupidatat duis velit amet officia laborum
+consequat magna nisi nulla id tempor velit magna qui. Et consequat ex
+sint in esse occaecat est dolore! Ea mollit adipiscing irure duis
+magna nisi culpa aute sit. Occaecat id sit laboris veniam proident ad
+do ex minim consectetur anim ipsum! Dolor est mollit amet ad consequat
+eiusmod mollit non officia ut culpa sunt labore nostrud! Commodo sunt
+eiusmod elit irure non aliqua deserunt! Veniam officia officia ad
+deserunt incididunt mollit laborum voluptate nostrud qui id cillum et
+laborum.
 
+Consequat ullamco proident esse id ex reprehenderit culpa.
+Reprehenderit nisi lorem dolore aute amet ullamco do elit
+reprehenderit proident. Sed nisi nostrud fugiat irure consectetur
+nulla qui exercitation nostrud magna ex ut aute? Ut cupidatat commodo
+proident sit ad dolore aliquip laboris reprehenderit reprehenderit ut
+irure. Sint reprehenderit cillum non et do ipsum elit laboris? Eiusmod
+veniam labore id incididunt quis occaecat consectetur. In magna enim
+sit lorem ad adipiscing voluptate ipsum non cupidatat culpa duis
+commodo excepteur. Culpa cupidatat minim consequat nulla labore
+deserunt qui minim. Aliqua elit officia sint aliquip ea dolor esse!
 
 *** END OF THE PROJECT GUTENBERG EBOOK SAMPLE BOOK ***
+
+Updated editions will replace the previous one--the old editions will
+be renamed. Section 1. General Terms of Use and Redistributing Project
+Gutenberg electronic works.

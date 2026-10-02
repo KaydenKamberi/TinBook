@@ -1,8 +1,12 @@
 """Tests for core/text_cleaner.py owned by CP1C."""
 
+from pathlib import Path
+
 import pytest
 
 from core.text_cleaner import clean, clean_for_speech, strip_gutenberg_boilerplate
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 class TestStripGutenbergBoilerplate:
@@ -131,11 +135,7 @@ class TestCleanForSpeech:
     def test_drops_dash_scene_breaks(self):
         text = "First para.\n\n---\n\nSecond para."
         result = clean_for_speech(text)
-        assert "---" not in result
-        # After cleaning, the --- becomes ", " and then gets cleaned up
-        # The scene break paragraph should be dropped
-        assert "First para." in result
-        assert "Second para." in result
+        assert result == "First para.\n\nSecond para."
 
     def test_keeps_headings_as_paragraphs(self):
         text = "Chapter One\n\nSome content here."
@@ -165,21 +165,19 @@ Actual [Illustration: x] content with _italic_ and--dashes.
 
 class TestFixtures:
     def test_sample_book_clean(self):
-        with open("tests/fixtures/sample_book.txt", "r", encoding="utf-8") as f:
-            raw = f.read()
+        raw = (FIXTURES / "sample_book.txt").read_text(encoding="utf-8")
         result = clean(raw)
         assert "*** START OF" not in result
         assert "*** END OF" not in result
         assert "Produced by" not in result
         assert "E-text prepared by" not in result
-        assert "[Illustration: test image]" not in result
+        assert "[Illustration" not in result
         assert "_italic_" not in result
         assert "--" not in result
         assert "This is the first chapter" in result
 
     def test_no_chapters_clean(self):
-        with open("tests/fixtures/no_chapters.txt", "r", encoding="utf-8") as f:
-            raw = f.read()
+        raw = (FIXTURES / "no_chapters.txt").read_text(encoding="utf-8")
         result = clean(raw)
         assert "*** START OF" not in result
         assert "*** END OF" not in result
@@ -187,3 +185,66 @@ class TestFixtures:
         assert "[1]" not in result
         assert "_italic_" not in result
         assert "--" not in result
+
+
+class TestCommasAndDashes:
+    """Rule 6 only tidies commas created by "--"; ordinary commas are untouched."""
+
+    @pytest.mark.parametrize(
+        "text",
+        ['He paid 1,000 pounds.', '"Hello," he said.', "In 1,234,567 years, maybe.", "Yes, no, maybe."],
+    )
+    def test_ordinary_commas_untouched(self, text):
+        assert clean_for_speech(text) == text
+
+    @pytest.mark.parametrize(
+        ("text", "expected"),
+        [
+            ("This is a test--with a dash.", "This is a test, with a dash."),
+            ("word,--then", "word, then"),
+            ("a , b", "a, b"),
+            ("x, , y", "x, y"),
+            ("Wait--.", "Wait."),
+            ("Stop--!", "Stop!"),
+            ("--Hello there.", "Hello there."),
+            ("Mr. ---- came in.", "Mr. came in."),
+            ("one---two", "one, two"),
+        ],
+    )
+    def test_dash_rule(self, text, expected):
+        assert clean_for_speech(text) == expected
+
+
+class TestSceneBreaks:
+    @pytest.mark.parametrize("brk", ["-----", "---", "* * *", "*****", "= = =", "  -  *  =  "])
+    def test_scene_break_dropped_before_dash_rule(self, brk):
+        assert clean_for_speech(f"One.\n\n{brk}\n\nTwo.") == "One.\n\nTwo."
+
+
+class TestProducerBlock:
+    def test_blank_line_after_producer_block_is_kept(self):
+        raw = "Produced by A\nand B\n\nText."
+        assert strip_gutenberg_boilerplate(raw) == "Text."
+        raw = "Intro.\nProduced by A\nand B\n\nText."
+        assert strip_gutenberg_boilerplate(raw) == "Intro.\n\nText."
+
+    def test_block_starting_in_first_40_lines_continues_past_line_40(self):
+        lines = ["filler"] * 39 + ["Produced by A"] + ["continued credit"] * 5 + ["", "Text."]
+        result = strip_gutenberg_boilerplate("\n".join(lines))
+        assert "Produced by" not in result
+        assert "continued credit" not in result
+        assert result.endswith("filler\n\nText.")
+
+    def test_producer_line_after_line_40_is_kept(self):
+        lines = ["filler"] * 41 + ["Produced by A", "", "Text."]
+        assert "Produced by A" in strip_gutenberg_boilerplate("\n".join(lines))
+
+
+class TestFixtureText:
+    def test_sample_book_special_cases(self):
+        result = clean((FIXTURES / "sample_book.txt").read_text(encoding="utf-8"))
+        assert "1,000 crowns, an absurd sum, and the traveller laughed." in result
+        assert "pgdp" not in result and "Online" not in result  # full producer block removed
+        assert "* * *" not in result and "-----" not in result and ",," not in result
+        assert "Updated editions" not in result  # footer removed
+        assert result.startswith("CONTENTS\n\n")
