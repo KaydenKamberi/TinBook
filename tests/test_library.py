@@ -101,6 +101,176 @@ def test_list_books_sorted_and_skips_unreadable(metadata, caplog) -> None:
     assert caplog.text.count("Skipping unreadable book folder") == 4
 
 
+def test_list_books_skips_deeply_nested_json(metadata, caplog) -> None:
+    book = create_sample(metadata)
+    broken = get_config().library_dir / "deeply-nested"
+    broken.mkdir()
+    (broken / "book.json").write_text("[" * 2000 + "0" + "]" * 2000, encoding="utf-8")
+    assert library.list_books() == [book]
+    assert "Skipping unreadable book folder deeply-nested" in caplog.text
+    with pytest.raises(library.LibraryError):
+        library.get_book("deeply-nested")
+
+
+@pytest.mark.parametrize("error", [RecursionError("deep metadata"), RuntimeError("unexpected")])
+def test_list_books_catches_unexpected_loader_exceptions(metadata, monkeypatch, caplog, error):
+    book = create_sample(metadata)
+    (get_config().library_dir / "bad-book").mkdir()
+    real_get_book = library.get_book
+
+    def fail_bad_book(book_id):
+        if book_id == "bad-book":
+            raise error
+        return real_get_book(book_id)
+
+    monkeypatch.setattr(library, "get_book", fail_bad_book)
+    assert library.list_books() == [book]
+    assert "Skipping unreadable book folder bad-book" in caplog.text
+
+
+@pytest.mark.parametrize("field, value", [
+    ("id", 2554), ("id", "wrong-directory"),
+    ("title", None), ("title", 123),
+    ("gutenberg_id", None), ("gutenberg_id", "2554"), ("gutenberg_id", True),
+    ("gutenberg_id", 1.5), ("gutenberg_id", 0), ("gutenberg_id", -1),
+    ("authors", None), ("authors", "Author"), ("authors", [None]),
+    ("voice", None), ("voice", []),
+    ("status", None), ("status", []), ("status", "unknown"),
+    ("audio_format", None), ("audio_format", []), ("audio_format", "wav"),
+    ("chapters", None), ("chapters", {}), ("chapters", "text"), ("chapters", [None]),
+    ("added_at", None), ("added_at", 123),
+    ("error", False), ("error", []),
+    ("schema_version", None), ("schema_version", True), ("schema_version", "1"),
+    ("schema_version", 0),
+])
+def test_get_book_rejects_invalid_book_fields(metadata, field, value) -> None:
+    book = create_sample(metadata)
+    data = book.to_dict()
+    data[field] = value
+    library.write_json_atomic(library.book_dir(book.id) / "book.json", data)
+    with pytest.raises(library.LibraryError):
+        library.get_book(book.id)
+
+
+@pytest.mark.parametrize("field, value", [
+    ("index", None), ("index", "0"), ("index", True), ("index", -1),
+    ("title", None), ("title", 123),
+    ("word_count", None), ("word_count", "3"), ("word_count", False), ("word_count", -1),
+    ("status", None), ("status", []), ("status", "queued"),
+    ("duration_sec", "1.5"), ("duration_sec", True), ("duration_sec", -1),
+    ("duration_sec", float("nan")), ("duration_sec", float("inf")),
+])
+def test_get_book_rejects_invalid_chapter_fields(metadata, field, value) -> None:
+    book = create_sample(metadata)
+    data = book.to_dict()
+    data["chapters"][0][field] = value
+    library.write_json_atomic(library.book_dir(book.id) / "book.json", data)
+    with pytest.raises(library.LibraryError):
+        library.get_book(book.id)
+
+
+@pytest.mark.parametrize("status", ["queued", "generating", "ready", "error"])
+@pytest.mark.parametrize("audio_format", ["opus", "mp3"])
+def test_get_book_accepts_valid_statuses_and_audio_formats(metadata, status, audio_format):
+    book = create_sample(metadata)
+    book.status = status
+    book.audio_format = audio_format
+    book.error = "Error details" if status == "error" else None
+    library.save_book(book)
+    assert library.get_book(book.id) == book
+
+
+def test_create_book_publishes_only_complete_staged_folder(metadata, monkeypatch) -> None:
+    final = library.book_dir("2554-crime-and-punishment")
+    real_rename = Path.rename
+    published = []
+
+    def inspect_rename(staging, destination):
+        assert destination == final
+        assert staging.parent == final.parent
+        assert staging != final
+        assert not final.exists()
+        assert (staging / "text/000.txt").read_text(encoding="utf-8") == "One two\nthree"
+        assert (staging / "raw.txt").is_file()
+        assert (staging / "audio").is_dir()
+        assert json.loads((staging / "book.json").read_text(encoding="utf-8"))["status"] == "queued"
+        assert library.list_books() == []
+        published.append(staging)
+        return real_rename(staging, destination)
+
+    monkeypatch.setattr(Path, "rename", inspect_rename)
+    book = create_sample(metadata)
+    assert library.get_book(book.id) == book
+    assert len(published) == 1
+    assert not published[0].exists()
+
+
+def test_create_book_replaces_leftover_without_book_json(metadata) -> None:
+    final = library.book_dir("2554-crime-and-punishment")
+    final.mkdir()
+    (final / "old-partial.txt").write_text("crash debris", encoding="utf-8")
+    book = create_sample(metadata)
+    assert library.get_book(book.id) == book
+    assert not (final / "old-partial.txt").exists()
+    assert list(final.parent.iterdir()) == [final]
+
+
+def test_orphaned_staging_folder_does_not_block_readding(metadata) -> None:
+    orphan = get_config().library_dir / ".2554-crime-and-punishment-crashed.tmp"
+    orphan.mkdir()
+    (orphan / "book.json").write_text("{}", encoding="utf-8")
+    assert library.list_books() == []
+    book = create_sample(metadata)
+    assert library.list_books() == [book]
+    assert library.get_book(book.id) == book
+
+
+def test_creation_failure_preserves_leftover_until_ready_to_publish(metadata, monkeypatch):
+    final = library.book_dir("2554-crime-and-punishment")
+    final.mkdir()
+    debris = final / "old-partial.txt"
+    debris.write_text("crash debris", encoding="utf-8")
+
+    def fail_write(*args):
+        raise library.LibraryError("disk error")
+
+    monkeypatch.setattr(library, "write_json_atomic", fail_write)
+    with pytest.raises(library.LibraryError):
+        create_sample(metadata)
+    assert debris.read_text(encoding="utf-8") == "crash debris"
+    assert list(final.parent.iterdir()) == [final]
+
+
+def test_publish_failure_removes_staging_and_allows_retry(metadata, monkeypatch) -> None:
+    with monkeypatch.context() as patch:
+        def fail_rename(*args):
+            raise OSError("rename failed")
+
+        patch.setattr(Path, "rename", fail_rename)
+        with pytest.raises(library.LibraryError, match="rename failed"):
+            create_sample(metadata)
+    assert list(get_config().library_dir.iterdir()) == []
+    book = create_sample(metadata)
+    assert library.get_book(book.id) == book
+
+
+def test_completed_book_appearing_during_staging_is_not_overwritten(metadata, monkeypatch):
+    final = library.book_dir("2554-crime-and-punishment")
+    real_write = library.write_json_atomic
+
+    def concurrent_publication(path, data):
+        real_write(path, data)
+        final.mkdir()
+        existing = dict(data, title="Existing book")
+        real_write(final / "book.json", existing)
+
+    monkeypatch.setattr(library, "write_json_atomic", concurrent_publication)
+    with pytest.raises(library.LibraryError, match="already exists"):
+        create_sample(metadata)
+    assert library.get_book(final.name).title == "Existing book"
+    assert list(final.parent.iterdir()) == [final]
+
+
 def test_delete_book_removes_all_files(metadata) -> None:
     book = create_sample(metadata)
     library.chapter_audio_path(book.id, 0, "opus").write_bytes(b"audio")
@@ -199,6 +369,7 @@ def test_failed_creation_rolls_back_only_new_directory(metadata, monkeypatch) ->
     with pytest.raises(library.LibraryError):
         create_sample(metadata)
     assert not library.book_dir("2554-crime-and-punishment").exists()
+    assert list(get_config().library_dir.iterdir()) == []
 
 
 @pytest.mark.parametrize("file_name", ["raw.txt", "001.txt"])
@@ -221,6 +392,7 @@ def test_text_write_failure_rolls_back_and_preserves_other_books(
         )
     assert not library.book_dir("2-another-book").exists()
     assert library.get_book(existing.id) == existing
+    assert list(get_config().library_dir.iterdir()) == [library.book_dir(existing.id)]
 
 
 def test_concurrent_json_writers_leave_one_complete_document(tmp_path) -> None:
@@ -323,12 +495,39 @@ def test_non_200_status_is_gutenberg_error(http, status) -> None:
         gutenberg.search("book")
 
 
-@pytest.mark.parametrize("body", ["not JSON", "[]", '{"results": null}',
-                                     '{"results": [{}]}'])
+@pytest.mark.parametrize("body", ["not JSON", "[]", '{"results": null}'])
 def test_bad_json_or_metadata_is_gutenberg_error(http, body) -> None:
     http.get("https://gutendex.com/books/", body=body)
     with pytest.raises(gutenberg.GutenbergError):
         gutenberg.search("book")
+
+
+@pytest.mark.parametrize("bad_result", [
+    dict(api_book(), download_count=None), dict(api_book(), title=None),
+    dict(api_book(), authors=[None]), {}, None,
+])
+def test_search_skips_bad_results_and_keeps_valid_order(http, caplog, bad_result) -> None:
+    last = dict(api_book({}), id=2, title="Another Book")
+    http.get(
+        "https://gutendex.com/books/",
+        json={"results": [api_book(), bad_result, last]},
+    )
+    results = gutenberg.search("crime and punishment")
+    assert [result.gutenberg_id for result in results] == [2554, 2]
+    assert results[1].text_url is None
+    assert "Skipping invalid Gutenberg search result 2" in caplog.text
+
+
+def test_search_returns_empty_list_if_all_results_invalid(http, caplog) -> None:
+    http.get("https://gutendex.com/books/", json={"results": [{}, None]})
+    assert gutenberg.search("book") == []
+    assert caplog.text.count("Skipping invalid Gutenberg search result") == 2
+
+
+def test_get_metadata_still_raises_for_malformed_single_book(http) -> None:
+    http.get("https://gutendex.com/books/2554/", json=dict(api_book(), download_count=None))
+    with pytest.raises(gutenberg.GutenbergError):
+        gutenberg.get_metadata(2554)
 
 
 def test_http_timeout_uses_configuration(monkeypatch) -> None:

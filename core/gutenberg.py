@@ -23,7 +23,13 @@ def search(query: str, page: int = 1) -> list[SearchResult]:
     data = _get_json(_BASE_URL, {"search": query, "languages": "en", "page": page})
     if not isinstance(data.get("results"), list):
         raise GutenbergError("Gutenberg returned invalid search results. Please try again.")
-    return [_parse_metadata(item) for item in data["results"]]
+    results = []
+    for position, item in enumerate(data["results"], start=1):
+        try:
+            results.append(_parse_metadata(item))
+        except GutenbergError as error:
+            log.warning("Skipping invalid Gutenberg search result %s: %s", position, error)
+    return results
 
 
 def get_metadata(gutenberg_id: int) -> SearchResult:
@@ -126,6 +132,6 @@ def _parse_metadata(data: dict) -> SearchResult:
             download_count=int(data.get("download_count", 0)),
             text_url=_text_url(formats),
         )
-    except (KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
         log.warning("Unreadable Gutenberg metadata: %s", error)
         raise GutenbergError("Gutenberg returned invalid book metadata. Please try again.") from error
