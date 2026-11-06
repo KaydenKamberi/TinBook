@@ -46,3 +46,25 @@ python -c "from core import gutenberg as g; print([(x.gutenberg_id, x.title) for
 ## Notes for the next agent
 - Module state for tests: `_gutendex_skip_until`, `_catalog_retry_at`, `_catalog_cache`. Reset all three in an autouse fixture (see either gutenberg test file), or a Gutendex failure in one test makes later tests skip Gutendex.
 - The CP1B handoff's live acceptance check (first three results for "crime and punishment") can now be run even while Gutendex is down.
+
+---
+
+# Update after the Wave 2 review — Claude Code
+Kayden approved this branch's edits outside CP1B ownership: `core/gutenberg.py`, `tests/test_library.py`, and ARCHITECTURE §5.
+
+## Changed
+- **Merged `origin/cp2c-mistral`** into this branch, so `tests/test_gutenberg.py` (CP2C) is here. Before this, merging both into `main` made 14 of its tests fail:
+  - 13 failed because of leaked module state. `test_search_timeout_raises` started the 60 s Gutendex pause, and the tests after it skipped Gutendex.
+  - 1 failed because download behaviour changed (see the 404 test below).
+- **`tests/test_gutenberg.py`:**
+  - Added the same autouse `reset_gutenberg_state` fixture as `tests/test_library.py`.
+  - `test_download_text_http_404_raises` now also registers a 404 for the direct `https://www.gutenberg.org/cache/epub/84/pg84.txt` URL. It expects "no plain-text download" and checks that all three URLs are requested in order.
+- **`core/gutenberg.py`, `search()`:** a Gutendex **404 on page > 1** now returns `[]` instead of falling back to the catalog. Gutendex answers 404 for a page past the last one. Before this fix, "More results" could append catalog results (duplicates or unrelated books) after the real Gutendex results. A 404 on page 1, and any outage on any page, still fall back as before. ARCHITECTURE §5 is updated to match.
+- **`tests/test_gutenberg_fallback.py`:** 4 new tests (38 total):
+  - a 404 past the last page returns `[]` and never downloads the catalog (this test fails without the fix);
+  - a 404 on page 1 still uses the catalog;
+  - a later page still falls back during a 503 or timeout.
+- Full suite: **386 passed**.
+
+## Known issue (unchanged)
+- If Gutendex goes down between page 1 and page 2, page 2 comes from the catalog, whose ranking differs, so results can repeat. The frontend (CP2B) drops duplicate IDs when it appends "More results".

@@ -156,6 +156,7 @@ def download_text(gutenberg_id: int) -> str     # raw UTF-8 text
   - `search` / `get_metadata`: use Project Gutenberg's catalog `https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv`, cached at `<library_dir>/pg_catalog.csv` (written via `.tmp` + `os.replace`, only after it parses). Re-downloaded when older than 7 days; if that refresh fails, the old copy is used (refresh retried at most every 10 min). Parsed once per process and kept in memory until the file changes.
   - Catalog search: English only (`Language` contains `en`); every query word (case- and accent-insensitive) must appear in title + authors. Order: exact title, title starts with query, title contains query, all words in title, author-only match; then books with text before audio; then lowest ID. 32 results per page (as Gutendex).
   - Catalog → `SearchResult`: `download_count=0`; `authors` = `Authors` entries without a `[Role]` (translators etc.), life dates removed (`"Dostoyevsky, Fyodor, 1821-1881"` → `"Dostoyevsky, Fyodor"`); `text_url` = the direct URL above if `Type` is `Text`, else None. `get_metadata` returns any language; unknown IDs raise `GutenbergError`.
+  - Exception: a Gutendex 404 for `search` with `page > 1` means "past the last page", so `search` returns `[]` and does not use the catalog (no catalog results mixed into later pages).
   - After Gutendex times out, is unreachable or returns 5xx, it is skipped for 60 s (straight to the fallback). 404s do not pause it.
   - If the fallback also fails, raise `GutenbergError` mentioning both failures.
 

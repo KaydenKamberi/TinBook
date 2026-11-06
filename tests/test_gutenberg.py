@@ -12,6 +12,14 @@ from core.gutenberg import GutenbergError
 from core.models import SearchResult
 
 
+@pytest.fixture(autouse=True)
+def reset_gutenberg_state(monkeypatch):
+    """Gutenberg keeps outage and catalog state in module globals; reset per test."""
+    monkeypatch.setattr(gutenberg, "_gutendex_skip_until", 0.0)
+    monkeypatch.setattr(gutenberg, "_catalog_retry_at", 0.0)
+    monkeypatch.setattr(gutenberg, "_catalog_cache", None)
+
+
 def _query(call) -> dict[str, list[str]]:
     """Query-string parameters actually sent in a recorded request."""
     return parse_qs(urlparse(call.request.url).query)
@@ -451,8 +459,19 @@ def test_download_text_http_404_raises():
         "https://www.gutenberg.org/files/84/84-0.txt",
         status=404,
     )
-    with pytest.raises(GutenbergError, match="HTTP 404"):
+    # After the listed URL fails, download_text also tries the direct cache URL.
+    responses.add(
+        responses.GET,
+        "https://www.gutenberg.org/cache/epub/84/pg84.txt",
+        status=404,
+    )
+    with pytest.raises(GutenbergError, match="no plain-text download"):
         gutenberg.download_text(84)
+    assert [call.request.url for call in responses.calls] == [
+        "https://gutendex.com/books/84/",
+        "https://www.gutenberg.org/files/84/84-0.txt",
+        "https://www.gutenberg.org/cache/epub/84/pg84.txt",
+    ]
 
 
 @responses.activate

@@ -77,6 +77,10 @@ def search(query: str, page: int = 1) -> list[SearchResult]:
         if not isinstance(data.get("results"), list):
             raise GutenbergError("Gutenberg returned invalid search results. Please try again.")
     except GutenbergError as error:
+        if page > 1 and isinstance(error, _NotFound):
+            # Gutendex answers 404 past its last page: that is the end of the
+            # results, not an outage, so don't append catalog results.
+            return []
         log.warning("Gutendex search failed (%s); searching the Gutenberg catalog.", error)
         return _with_fallback(error, lambda: _catalog_search(_catalog(), query, page))
     results = []

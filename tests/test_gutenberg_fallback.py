@@ -177,6 +177,28 @@ def test_gutendex_404_does_not_pause_gutendex(http) -> None:
     assert len(calls_to(http, GUTENDEX)) == 2
 
 
+def test_gutendex_404_past_last_page_ends_results_without_catalog(http) -> None:
+    gutendex_down(http, status=404)  # Gutendex answers 404 for a page past the end
+    assert gutenberg.search("crime", page=2) == []
+    assert gutenberg.search("crime", page=7) == []
+    assert calls_to(http, CATALOG) == []  # no catalog results mixed into later pages
+    assert len(calls_to(http, GUTENDEX)) == 2
+
+
+def test_gutendex_404_on_first_page_still_uses_catalog(http) -> None:
+    gutendex_down(http, status=404)
+    http.get(CATALOG, body=CSV)
+    assert [r.gutenberg_id for r in gutenberg.search("karamazov", page=1)] == [28054]
+
+
+@pytest.mark.parametrize("failure", [{"status": 503}, {"error": requests.Timeout("slow")}])
+def test_later_page_still_falls_back_when_gutendex_is_down(http, failure) -> None:
+    gutendex_down(http, **failure)
+    http.get(CATALOG, body=catalog_csv(
+        [(n, "Text", f"Sea Story {n}", "en", "Writer, A") for n in range(1, 41)]))
+    assert [r.gutenberg_id for r in gutenberg.search("sea", page=2)] == list(range(33, 41))
+
+
 def test_gutendex_request_uses_8_second_timeout(http) -> None:
     gutendex_down(http, error=requests.Timeout("slow"))
     http.get(CATALOG, body=CSV)
