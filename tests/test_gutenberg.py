@@ -1,12 +1,20 @@
 """CP2C tests for core/gutenberg.py using mocked HTTP responses."""
 
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 import requests
 import responses
 
 from core import gutenberg
+from core.config import get_config
 from core.gutenberg import GutenbergError
 from core.models import SearchResult
+
+
+def _query(call) -> dict[str, list[str]]:
+    """Query-string parameters actually sent in a recorded request."""
+    return parse_qs(urlparse(call.request.url).query)
 
 
 @responses.activate
@@ -208,6 +216,57 @@ def test_search_pagination():
     results = gutenberg.search("test", page=2)
     assert len(results) == 10
     assert results[0].gutenberg_id == 1
+    assert len(responses.calls) == 1
+    assert _query(responses.calls[0])["page"] == ["2"]
+
+
+@responses.activate
+def test_search_sends_query_language_page_and_user_agent():
+    """Search sends search=<q>, languages=en, page=<n> and the configured User-Agent."""
+    responses.add(
+        responses.GET,
+        "https://gutendex.com/books/",
+        json={"count": 0, "results": []},
+        status=200,
+    )
+    assert gutenberg.search("crime and punishment") == []
+    assert len(responses.calls) == 1
+    query = _query(responses.calls[0])
+    assert query["search"] == ["crime and punishment"]
+    assert query["languages"] == ["en"]
+    assert query["page"] == ["1"]
+    assert responses.calls[0].request.headers["User-Agent"] == get_config().user_agent
+
+
+@responses.activate
+def test_metadata_and_download_send_user_agent():
+    """get_metadata and download_text both send the configured User-Agent."""
+    responses.add(
+        responses.GET,
+        "https://gutendex.com/books/84/",
+        json={
+            "id": 84,
+            "title": "Frankenstein",
+            "authors": [],
+            "languages": ["en"],
+            "download_count": 0,
+            "formats": {"text/plain; charset=utf-8": "https://www.gutenberg.org/files/84/84-0.txt"},
+        },
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        "https://www.gutenberg.org/files/84/84-0.txt",
+        body="text",
+        status=200,
+    )
+    gutenberg.download_text(84)
+    assert [call.request.url for call in responses.calls] == [
+        "https://gutendex.com/books/84/",
+        "https://www.gutenberg.org/files/84/84-0.txt",
+    ]
+    for call in responses.calls:
+        assert call.request.headers["User-Agent"] == get_config().user_agent
 
 
 @responses.activate
