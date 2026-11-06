@@ -1,23 +1,13 @@
-"""Minimal CP0 desktop launcher; the full app is owned by CP2A."""
+"""Launch Tinbook in a desktop window or browser mode."""
 
 from __future__ import annotations
 
 import argparse
 import threading
 
-from flask import Flask
 from werkzeug.serving import make_server
 
-
-def create_app() -> Flask:
-    """Create the CP0 health page."""
-    app = Flask(__name__)
-
-    @app.get("/")
-    def index() -> str:
-        return "Tinbook OK"
-
-    return app
+from .server import create_app
 
 
 def main() -> None:
@@ -25,20 +15,30 @@ def main() -> None:
     parser.add_argument("--browser", action="store_true", help="serve the browser preview")
     args = parser.parse_args()
     app = create_app()
-
-    if args.browser:
-        app.run(host="0.0.0.0", port=5000)
-        return
-
-    server = make_server("127.0.0.1", 0, app, threaded=True)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    server = None
+    thread = None
     try:
+        if args.browser:
+            app.run(host="0.0.0.0", port=5000, use_reloader=False, threaded=True)
+            return
+
         import webview
 
-        webview.create_window("Tinbook", f"http://127.0.0.1:{server.server_port}")
+        server = make_server("127.0.0.1", 0, app, threaded=True)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        webview.create_window(
+            "Tinbook", f"http://127.0.0.1:{server.server_port}",
+            width=420, height=720, min_size=(360, 560),
+        )
         webview.start()
     finally:
-        server.shutdown()
+        if server is not None:
+            server.shutdown()
+            server.server_close()
+        if thread is not None:
+            thread.join(timeout=2)
+        app.extensions["tinbook_queue"].stop()
 
 
 if __name__ == "__main__":
