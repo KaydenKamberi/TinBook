@@ -12,7 +12,7 @@
   - The button reads Start, Continue, Listen again, or Open player (for the book already open).
   - A book with status `error` shows its `error` text.
   - There is an empty state with a "Find a book" button.
-- **Polling:** `/api/books` and `/api/jobs` are refreshed every 3 s while any book is `queued` or `generating`, or the player is waiting for a chapter. Polling also continues while the server can't be reached or the first load hasn't succeeded. Otherwise it stops.
+- **Polling:** `/api/books` and `/api/jobs` are refreshed every 3 s while any book is `queued` or `generating`, or the player is waiting for a chapter that can still arrive. Polling also continues while the server can't be reached or the first load hasn't succeeded. Otherwise it stops.
   - Cards are only rebuilt when the data changes, so keyboard focus and hover aren't lost every 3 s.
 - **Search:**
   - Enter or the Search button runs a search.
@@ -20,7 +20,7 @@
   - A result with no `text_url` gets a disabled "No text version" button.
   - A book already in the library gets a disabled "In library" button.
   - "Add" shows a spinner with "Adding…" during `POST /api/books`, then jumps to the Library. Errors from the server's `{"error"}` appear under that result.
-  - "More results" loads `page=2, 3…`. An empty page or an error past the last page is treated as the end.
+  - "More results" loads `page=2, 3…`. Books already listed are dropped. An empty page, a page of only repeats, or an error past the last page is treated as the end.
   - Stale responses from an earlier search are ignored.
 - **Player:**
   - Shows the title, author, "Chapter n of N" and the chapter title.
@@ -46,7 +46,7 @@
 - **Mini player:** a now-playing bar at the bottom of Library and Search, with play/pause. Click it to open the Player.
 - **Book disappears:** if a book is deleted while it's open, the player closes with a message. If its audio disappears (regenerate), the player switches to the waiting state.
 - **`window.tinbook.saveProgress()`:** a hook for the desktop shell to force a save before closing (see Notes).
-- **No mocks committed.** I tested against a throwaway Flask mock of §6 plus a Playwright script, both kept outside the repo. 32 checks passed:
+- **No mocks committed.** I tested against a throwaway Flask mock of §6 plus a Playwright script, both kept outside the repo. 32 of 33 checks passed. The 33rd ("no console errors") failed only because Chromium logs the two HTTP 502 responses that the mock returned on purpose to test the search error message. There were no script errors. The 32 checks:
   - resume position and speed;
   - saves every 5 s, a single save on pause, and no saves while paused;
   - −30 / +30 edge cases, speed saving, and the chapter list;
@@ -103,3 +103,19 @@ Browser mode works too: `python -m desktop.app --browser`, then open http://127.
   - The player functions are inside one IIFE in `app.js`. For shortcuts and Media Session, add handlers inside it that call `togglePlay()`, `skip(±30)` and `goToChapter()`.
   - Add `<div id="settings-root">` to the Library section and `<script src="/static/settings.js">` after `app.js`.
 - **CP4B:** after a regenerate or delete, calling a refresh is enough. The player already handles a book or audio file disappearing. To trigger it from `settings.js`, CP4A can expose a refresh function on `window.tinbook`.
+
+---
+
+# Fixes after the Wave 2 review — Claude Code
+- **Duplicate search results (review item 6, UI half):** when "More results" appends a page, books whose `gutenberg_id` is already listed are dropped. A page that adds nothing new counts as the end of the results. Pages can repeat when the server switches to its backup catalog between pages. The backend half is on `gutenberg-fallback-claude`: a Gutendex 404 past the last page now returns `[]`.
+- **Endless polling on a failed book (review item 7):**
+  - If the player is waiting for a chapter and the book's status is `error`, it stops polling for it and shows the error with the book's `error` text, e.g. "Chapter 2 couldn't be generated. Chapter 2 (Chapter II) failed twice: …".
+  - The play button shows Play instead of a pending Pause, and the mini bar says "Chapter N isn't available".
+  - A failed chapter in a book that is `queued` or `generating` again is being retried, so the player keeps waiting and polling for it.
+  - Polling continues anyway if other books are generating. After a regenerate (CP4B), call a refresh to pick the book up again.
+- **Handoff (review item 10):** explained the 33rd check above.
+- **Tested** with a new throwaway mock and Playwright script, neither committed. 11 checks passed:
+  - duplicates dropped, and a page of only repeats ends the list;
+  - the error message on a failed book, the Play icon, no requests for 7 s, and the mini bar text;
+  - regressions: a chapter that's still generating shows "Waiting…", keeps polling, and auto-starts once ready; a failed chapter being retried shows "Waiting…", not an error.
+- **Still open (review item 5):** check every `fetch()` here against `desktop/server.py` once `cp2a-replit` exists. That means `GET` `/api/books`, `/api/jobs` and `/api/search?q=&page=`; `POST /api/books`; `GET /api/books/<id>`; `GET`/`PUT /api/books/<id>/progress`; and audio through each chapter's `audio_url`.

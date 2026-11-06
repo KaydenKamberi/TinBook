@@ -298,7 +298,8 @@
   /* ---------------------------------------------------------------- polling */
 
   function needsPolling() {
-    return !state.loaded || state.connectionError || state.waiting || state.books.some(isBusy);
+    const waitingForAudio = state.waiting && !waitingFailed();
+    return !state.loaded || state.connectionError || waitingForAudio || state.books.some(isBusy);
   }
 
   function schedulePoll() {
@@ -393,12 +394,16 @@
     s.busy = false;
     s.query = query;
     s.page = page;
-    s.results = s.results.concat(results);
+    // Drop books already listed: a later page can repeat earlier ones
+    // (e.g. if the server switched to its backup catalog between pages).
+    const seen = new Set(s.results.map((r) => r.gutenberg_id));
+    const fresh = results.filter((r) => !seen.has(r.gutenberg_id) && seen.add(r.gutenberg_id));
+    s.results = s.results.concat(fresh);
     const list = $("search-results");
-    for (const r of results) list.append(resultItem(r));
+    for (const r of fresh) list.append(resultItem(r));
     if (s.results.length === 0) {
       $("search-status").textContent = `No books found for “${query}”.`;
-    } else if (results.length === 0) {
+    } else if (fresh.length === 0) {
       $("search-status").textContent = `${s.results.length} results · no more results.`;
     } else {
       $("search-status").textContent = `${s.results.length} results`;
@@ -494,6 +499,14 @@
   /* ----------------------------------------------------------------- player */
 
   const isPlaying = () => !audio.paused && !audio.ended;
+
+  /** Waiting for a chapter that won't arrive: the book's generation stopped with an error. */
+  function waitingFailed() {
+    return state.waiting && Boolean(state.book) && state.book.status === "error";
+  }
+
+  /** Show the pause icon while playing, or while playback will start by itself. */
+  const showsPlaying = () => isPlaying() || (state.wantPlay && !state.audioError && !waitingFailed());
 
   function chapterDuration() {
     if (Number.isFinite(audio.duration) && audio.duration > 0 && state.loadedSrc && !state.waiting) {
@@ -761,13 +774,13 @@
     if (book.chapters.length === 0) return { cls: "error", text: "This book has no chapters." };
     const ch = book.chapters[state.chapterIndex];
     if (state.audioError) return { cls: "error", text: `Couldn't play chapter ${n}. Press play to try again.` };
+    if (waitingFailed()) {
+      const reason = book.error ? ` ${book.error}` : "";
+      if (ch && ch.status === "error") return { cls: "error", text: `Chapter ${n} couldn't be generated.${reason}` };
+      return { cls: "error", text: `Chapter ${n} isn't available: generation stopped with an error.${reason}` };
+    }
     if (state.waiting) {
-      if (ch && ch.status === "error") {
-        return { cls: "error", text: `Chapter ${n} couldn't be generated.${book.error ? ` ${book.error}` : ""}` };
-      }
-      if (book.status === "error") {
-        return { cls: "error", text: `Chapter ${n} isn't available: generation stopped with an error.` };
-      }
+      // A failed chapter in a book that is generating again is being retried.
       return { cls: "waiting", text: `Waiting for chapter ${n}…` };
     }
     if (state.finished) return { cls: "done", text: "You finished this book." };
@@ -817,7 +830,7 @@
     $("p-prev").disabled = state.chapterIndex <= 0;
     $("p-next").disabled = state.chapterIndex >= count - 1;
     $("p-play").disabled = count === 0;
-    setPlayButton($("p-play"), isPlaying() || (state.wantPlay && !state.audioError));
+    setPlayButton($("p-play"), showsPlaying());
     renderTimes();
   }
 
@@ -862,12 +875,14 @@
     const show = Boolean(state.book) && state.view !== "player";
     $("mini").hidden = !show;
     if (!show) return;
+    const n = state.chapterIndex + 1;
     const ch = state.book.chapters[state.chapterIndex];
-    $("mini-chapter").textContent = state.waiting
-      ? `Waiting for chapter ${state.chapterIndex + 1}…`
-      : (ch ? ch.title : "");
+    let line = ch ? ch.title : "";
+    if (waitingFailed()) line = `Chapter ${n} isn't available`;
+    else if (state.waiting) line = `Waiting for chapter ${n}…`;
+    $("mini-chapter").textContent = line;
     $("mini-book").textContent = state.book.title || "";
-    setPlayButton($("mini-play"), isPlaying() || (state.wantPlay && !state.audioError));
+    setPlayButton($("mini-play"), showsPlaying());
   }
 
   /* ----------------------------------------------------------------- events */
