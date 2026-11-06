@@ -106,16 +106,18 @@ def test_list_voices_requires_model_and_config(env: Path) -> None:
     install_voice(env, "en_US-b-medium")
     install_voice(env, "en_GB-a-low")
     (env / "en_US-orphan-medium.onnx").write_bytes(b"no json")
-    assert tts.list_voices() == ["en_GB-a-low", "en_US-b-medium"]
+    assert tts.list_voices() == ["piper:en_GB-a-low", "piper:en_US-b-medium"]  # canonical IDs (CP3)
 
 
-def test_check_environment_shape(fakes) -> None:
+def test_check_environment_shape(fakes, monkeypatch) -> None:
+    monkeypatch.setattr(tts.importlib.util, "find_spec", lambda name: None)  # kokoro-onnx not installed
     assert tts.check_environment() == {
         "piper": True,
+        "kokoro": False,
         "ffmpeg": "ffmpeg-bundled",
         "opus": True,
         "mp3": True,
-        "voices": [fakes.voice],
+        "voices": [f"piper:{fakes.voice}"],
     }
 
 
@@ -173,6 +175,25 @@ def test_ffmpeg_without_libopus_is_rechecked(monkeypatch, fakes) -> None:
 
 
 # ---------------------------------------------------------------- synthesis
+
+
+def test_synthesize_accepts_canonical_piper_ids(fakes, tmp_path: Path) -> None:
+    """CP3: "piper:<name>" and a plain "<name>" are the same voice."""
+    plain = tts.synthesize_to_file("Hi.", tmp_path / "a.opus", fakes.voice, "opus", "32k")
+    canonical = tts.synthesize_to_file("Hi.", tmp_path / "b.opus", f"piper:{fakes.voice}", "opus", "32k")
+    assert plain == canonical
+    assert (tmp_path / "b.opus").is_file()
+
+
+@pytest.mark.parametrize("voice, message", [
+    ("kokoro:af_heart", "kokoro engine is not available yet"),
+    ("espeak:x", "Unknown voice engine"),
+    ("", "non-empty"),
+])
+def test_synthesize_rejects_unsupported_voice_ids(fakes, tmp_path: Path, voice, message) -> None:
+    with pytest.raises(tts.TTSError, match=message):
+        tts.synthesize_to_file("Hi.", tmp_path / "a.opus", voice, "opus", "32k")
+    assert not (tmp_path / "a.opus").exists()
 
 
 def test_synthesize_writes_file_and_returns_duration(fakes, tmp_path: Path) -> None:

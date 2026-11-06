@@ -186,7 +186,7 @@ def _validate_book(book: Book) -> None:
         if not isinstance(chapter.title, str):
             raise ValueError("Chapter title must be a string")
         if not isinstance(chapter.status, str) or chapter.status not in {
-            "pending", "done", "error"
+            "pending", "done", "error", "skipped"
         }:
             raise ValueError("Invalid chapter status")
         duration = chapter.duration_sec

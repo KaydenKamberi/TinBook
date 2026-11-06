@@ -423,6 +423,21 @@ def test_mark_book_error_never_raises_for_a_deleted_book(lib) -> None:
     jobs._mark_book_error("gone", "whatever")  # no exception
 
 
+def test_skipped_chapters_are_never_generated_and_book_ends_ready(lib, synth) -> None:
+    """CP3 / PRD D-23: "skipped" chapters stay skipped; ready = every chapter done or skipped."""
+    lib.add("1-a", chapters=4)
+    book = lib.stored("1-a")
+    for chapter in book.chapters[:2]:
+        chapter.status = "skipped"
+    lib.save_book(book)
+    jobs.JobQueue()._process_book("1-a")
+    book = lib.stored("1-a")
+    assert synth.indexes() == [2, 3]
+    assert [c.status for c in book.chapters] == ["skipped", "skipped", "done", "done"]
+    assert book.status == "ready"
+    assert book.is_complete()
+
+
 def test_get_queue_is_a_singleton() -> None:
     assert jobs.get_queue() is jobs.get_queue()
     assert isinstance(jobs.get_queue(), jobs.JobQueue)

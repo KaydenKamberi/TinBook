@@ -1,6 +1,6 @@
 # Tinbook — Product Requirements Document
 
-**Owner:** Kayden · **Status:** Phase 1 ready to build · **Last updated:** Sept 2026
+**Owner:** Kayden · **Status:** Phase 1 — Wave 4 (voice options, start from a chapter, polish) · **Last updated:** Nov 2026
 
 ## 1. Summary
 Tinbook turns free public-domain books from Project Gutenberg into audiobooks using Piper, an open-source offline text-to-speech engine. It ships in two phases:
@@ -48,10 +48,32 @@ The desktop app is also the device's "sync station": it generates the audio (the
 | D-7 | Auto-advance to next chapter. If it isn't generated yet, show "Waiting for chapter N…" and start it automatically once ready. |
 | D-8 | Progress (chapter + position + speed) saves every 5s during playback, on pause, on chapter change, and on window close. |
 | D-9 | Keyboard: Space = play/pause, ← / → = ∓30s. Windows media keys via the Media Session API where supported. |
-| D-10 | Delete a book (removes its folder). Regenerate a book (new voice). |
-| D-11 | Settings: choose Piper voice from installed voices; default `en_US-lessac-medium`. |
+| D-10 | Delete a book (removes its folder). Regenerate a book with any installed voice (Piper or Kokoro). |
+| D-11 | Voice settings: see D-14–D-20. The default voice is `en_US-lessac-medium` until the user picks another. |
 | D-12 | Small window (~420×720), playback continues when minimized. |
 | D-13 | `--browser` mode serves the same UI on `0.0.0.0:5000` (for Replit and debugging). |
+
+**Voice options (Wave 4; contracts in ARCHITECTURE §9)**
+
+| ID | Requirement |
+|---|---|
+| D-14 | Two offline CPU text-to-speech engines: **Piper** (existing) and **Kokoro** (Kokoro-82M via the ONNX package `kokoro-onnx`; no PyTorch). |
+| D-15 | Voice IDs name their engine: `piper:en_US-ryan-high`, `kokoro:af_heart`. A plain name (`en_US-lessac-medium`) means Piper, so existing books and settings keep working. |
+| D-16 | A **Voices** screen lists a curated catalog (good Piper "high"/"medium" voices + the best-rated Kokoro voices). Each voice shows display name, engine, gender and accent, a quality note, download size, and whether it's installed. |
+| D-17 | Download a voice from the app with a progress bar. All Kokoro voices share one download (~354 MB once). |
+| D-18 | Play a short preview sample of an installed voice. |
+| D-19 | Delete a downloaded voice. Deleting a Kokoro voice removes all Kokoro voices; the app says so before deleting. |
+| D-20 | Adding a book shows a voice dropdown preselected to the last-used voice (remembered in `config.local.json`). |
+
+**Start from a chapter (Wave 4; contracts in ARCHITECTURE §10)**
+
+| ID | Requirement |
+|---|---|
+| D-21 | Before adding a book, the user can see its chapter list and choose the chapter to start from (default: the first). |
+| D-22 | The player opens the new book at the chosen start chapter. |
+| D-23 | Chapters before the start are **skipped**: never generated unless the user asks, with a per-chapter **Generate** action and a **Generate all skipped** option. |
+| D-24 | A book is **ready** when every chapter is generated or skipped. The library shows how many chapters are skipped. |
+| D-25 | When the player goes to a chapter that isn't generated yet (jump or auto-advance), that chapter is generated next, then generation continues in order from there. |
 
 ### Phase 2 — Device
 | ID | Requirement |
@@ -66,6 +88,7 @@ The desktop app is also the device's "sync station": it generates the audio (the
 | P-8 | Battery % from PiSugar 3 on screen; warn at 15%; save progress and shut down cleanly at 5%. |
 | P-9 | Progress saved every 10s, on pause, and on shutdown. Same `progress.json` format as desktop. |
 | P-10 | Power saving: Wi-Fi off during playback (also prevents Bluetooth audio stutter on the shared radio), backlight off when idle, CPU governor `powersave`. |
+| P-11 | Skipped chapters (D-23) are absent on the device, not missing: they aren't playable, next/previous and auto-advance skip over them, and sync doesn't treat them as errors. |
 
 ## 6. Non-functional requirements
 - **Offline:** after a book is downloaded, nothing needs internet.
@@ -83,7 +106,7 @@ The desktop app is also the device's "sync station": it generates the audio (the
 | Backend | Flask (JSON API + serves static frontend) |
 | Frontend | Vanilla HTML/CSS/JS, HTML5 `<audio>` |
 | Book source | Gutendex API (`https://gutendex.com/books/`) → gutenberg.org plain-text files |
-| TTS | Piper (`piper-tts` pip package), ONNX voices from `rhasspy/piper-voices` on Hugging Face |
+| TTS | Piper (`piper-tts` pip package), ONNX voices from `rhasspy/piper-voices` on Hugging Face; Kokoro-82M via `kokoro-onnx` (model files from its GitHub releases) |
 | Encoding | ffmpeg (via `imageio-ffmpeg`, fallback to system ffmpeg) → Opus 32 kbps mono |
 | Device OS | Raspberry Pi OS Lite 64-bit (latest offered by Raspberry Pi Imager) |
 | Device display | Pimoroni `displayhatmini` library + Pillow |
@@ -93,7 +116,7 @@ The desktop app is also the device's "sync station": it generates the audio (the
 
 ## 8. Phases & milestones
 See `docs/CHECKPOINTS.md` for the full plan with owners and parallel waves.
-- **Phase 1:** CP0 → Wave 1 (CP1A/B/C) → Wave 2 (CP2A/B/C) → CP3 integration → Wave 4 polish (CP4A/B/C). **Milestone:** Kayden listens to a Gutenberg book on his PC while coding.
+- **Phase 1:** CP0 → Wave 1 (CP1A/B/C) → Wave 2 (CP2A/B/C) → CP3 integration → Wave 4 (CP4A/B/C/D: voice options, start from a chapter, polish) → CP4Z review. **Milestone:** Kayden listens to a Gutenberg book on his PC while coding.
 - **Phase 2:** CP5 Pi setup → Wave 6 (CP6A/B/C) → CP7 device app → CP8 hardware & field test. **Milestone:** a full walk listening from the tin.
 
 ## 9. Risks & mitigations
@@ -107,9 +130,12 @@ See `docs/CHECKPOINTS.md` for the full plan with owners and parallel waves.
 | Parts don't fit in Altoids tin (depth) | Stack is ~17 mm + PiSugar board. Measure before cutting; fallback: deeper tin or 3D-printed case. |
 | Battery life shorter than hoped | Software power saving; later swap to larger flat LiPo if it fits. |
 | Parallel agents conflicting | Strict file ownership + frozen contracts + handoffs (AGENTS.md). |
+| Kokoro slow or broken on Kayden's PC | Kokoro is optional: Piper keeps working if `kokoro-onnx` fails to import; smoke test checks both engines. |
+| Voice downloads are large (Kokoro ~354 MB) | Sizes shown before downloading; resumable per file; one Kokoro download serves all Kokoro voices. |
 
 ## 10. Future ideas (not v1)
-- Sleep timer, bookmarks, multiple voices per book.
+- Sleep timer, bookmarks, multiple voices per book (e.g. a different voice per chapter).
+- Kokoro fp16 model (half the download) once its CPU speed is measured; non-English Kokoro voices.
 - Wi-Fi sync as an alternative to USB.
 - Non-English books with matching Piper voices.
 - Scroll-wheel (rotary encoder) and hardware hold switch.

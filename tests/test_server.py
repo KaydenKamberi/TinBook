@@ -26,7 +26,10 @@ def sandbox(monkeypatch, tmp_path):
     queue = Mock()
     queue.status.return_value = {"current": None, "queued": []}
     monkeypatch.setattr(jobs, "get_queue", lambda: queue)
-    monkeypatch.setattr(tts, "list_voices", lambda: ["en_US-lessac-medium", "en_GB-alba-medium"])
+    voices_dir = get_config().voices_dir  # tmp_path/voices
+    for name in ("en_US-lessac-medium", "en_GB-alba-medium"):  # installed voices (dummy files)
+        (voices_dir / f"{name}.onnx").write_bytes(b"model")
+        (voices_dir / f"{name}.onnx.json").write_text("{}", encoding="utf-8")
     monkeypatch.setattr(tts, "check_environment", lambda: {
         "piper": True, "ffmpeg": "ffmpeg", "opus": True, "voices": tts.list_voices(),
     })
@@ -117,7 +120,7 @@ def test_add_runs_real_clean_split_storage_and_enqueues(client, sandbox):
     assert response.status_code == 201
     data = response.json
     assert data["status"] == "queued"
-    assert data["voice"] == get_config().default_voice
+    assert data["voice"] == "piper:" + get_config().default_voice  # stored canonical (CP3)
     assert len(data["chapters"]) == 2
     assert all(chapter["status"] == "pending" for chapter in data["chapters"])
     assert all(chapter["audio_url"] is None for chapter in data["chapters"])
@@ -133,7 +136,7 @@ def test_add_runs_real_clean_split_storage_and_enqueues(client, sandbox):
 def test_explicit_voice_is_used(client):
     response = client.post("/api/books", json={"gutenberg_id": 84, "voice": "en_GB-alba-medium"})
     assert response.status_code == 201
-    assert response.json["voice"] == "en_GB-alba-medium"
+    assert response.json["voice"] == "piper:en_GB-alba-medium"  # stored canonical (CP3)
 
 
 @pytest.mark.parametrize("data", [{}, {"gutenberg_id": True}, {"gutenberg_id": 0},
@@ -288,7 +291,7 @@ def test_regeneration_resets_audio_metadata_and_preserves_progress(client, book,
     assert response.status_code == 200
     assert response.json["status"] == "queued"
     assert response.json["error"] is None
-    assert response.json["voice"] == "en_GB-alba-medium"
+    assert response.json["voice"] == "piper:en_GB-alba-medium"
     assert response.json["progress"]["position_sec"] == 5
     assert all(chapter["status"] == "pending" for chapter in response.json["chapters"])
     assert all(chapter["duration_sec"] is None for chapter in response.json["chapters"])
@@ -339,8 +342,9 @@ def test_missing_books_return_json_404(client, method, suffix):
 def test_jobs_and_voices(client, sandbox):
     sandbox.queue.status.return_value = {"current": {"book_id": "x"}, "queued": ["y"]}
     assert client.get("/api/jobs").json == sandbox.queue.status.return_value
-    assert client.get("/api/voices").json == {
-        "voices": tts.list_voices(), "default": get_config().default_voice,
+    assert client.get("/api/voices").json == {  # canonical IDs since CP3
+        "voices": ["piper:en_GB-alba-medium", "piper:en_US-lessac-medium"],
+        "default": "piper:en_US-lessac-medium",
     }
 
 
@@ -350,8 +354,8 @@ def test_settings_atomic_persistence_preserves_other_settings_and_clears_cache(c
     get_config.cache_clear()
     response = client.put("/api/settings", json={"default_voice": "en_GB-alba-medium"})
     assert response.status_code == 200
-    assert response.json == {"default_voice": "en_GB-alba-medium"}
-    assert get_config().default_voice == "en_GB-alba-medium"
+    assert response.json == {"default_voice": "piper:en_GB-alba-medium"}  # stored canonical (CP3)
+    assert get_config().default_voice == "piper:en_GB-alba-medium"
     assert get_config().audio_bitrate == "48k"
     assert not path.with_name(path.name + ".tmp").exists()
     assert json.loads(path.read_text(encoding="utf-8"))["audio_bitrate"] == "48k"

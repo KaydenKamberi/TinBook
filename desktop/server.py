@@ -10,7 +10,7 @@ from flask import Flask, abort, jsonify, render_template, request, send_file, ur
 from jinja2 import TemplateNotFound
 from werkzeug.exceptions import HTTPException
 
-from core import gutenberg, jobs, library, pipeline, progress, tts
+from core import gutenberg, jobs, library, pipeline, progress, tts, voices
 from core.config import get_config
 from core.models import Book, Progress
 
@@ -187,14 +187,20 @@ def create_app() -> Flask:
         return jsonify(jobs.get_queue().status())
 
     @app.get("/api/voices")
-    def voices():
-        return jsonify(voices=tts.list_voices(), default=get_config().default_voice)
+    def voice_list():
+        default = get_config().default_voice
+        try:
+            default = voices.normalize_voice_id(default)
+        except voices.VoiceError:
+            pass  # report a broken setting as-is
+        return jsonify(voices=tts.list_voices(), default=default)
 
     @app.put("/api/settings")
     def settings():
         voice = _body().get("default_voice")
-        if not isinstance(voice, str) or voice not in tts.list_voices():
+        if not voices.is_installed(voice):
             abort(400, description="default_voice must name an installed voice.")
+        voice = voices.normalize_voice_id(voice)
         with _settings_lock:
             path = get_config().root_dir / "config.local.json"
             try:

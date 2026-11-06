@@ -9,7 +9,8 @@ from datetime import datetime, timezone
 from typing import Literal, TypeVar
 
 
-ChapterStatus = Literal["pending", "done", "error"]
+# "skipped": before the chosen start chapter; never generated unless asked (PRD D-23).
+ChapterStatus = Literal["pending", "done", "error", "skipped"]
 BookStatus = Literal["queued", "generating", "ready", "error"]
 
 T = TypeVar("T")
@@ -105,6 +106,14 @@ class Book:
     def chapters_done(self) -> int:
         """Return the number of chapters with completed audio."""
         return sum(chapter.status == "done" for chapter in self.chapters)
+
+    def chapters_skipped(self) -> int:
+        """Return the number of chapters the user chose not to generate."""
+        return sum(chapter.status == "skipped" for chapter in self.chapters)
+
+    def is_complete(self) -> bool:
+        """True when every chapter is done or skipped (what status "ready" means)."""
+        return all(chapter.status in ("done", "skipped") for chapter in self.chapters)
 
     def total_duration_sec(self) -> float:
         """Sum chapter durations that are known."""

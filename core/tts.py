@@ -11,6 +11,7 @@ Two Piper engines are supported:
 from __future__ import annotations
 
 import contextlib
+import importlib.util
 import json
 import logging
 import os
@@ -23,6 +24,7 @@ import wave
 from pathlib import Path
 from typing import Any, BinaryIO
 
+from . import voices
 from .config import get_config
 
 log = logging.getLogger(__name__)
@@ -51,15 +53,8 @@ class TTSError(Exception):
 
 
 def list_voices() -> list[str]:
-    """Voice names in voices_dir that have both ``.onnx`` and ``.onnx.json`` files."""
-    voices_dir = get_config().voices_dir
-    if not voices_dir.is_dir():
-        return []
-    return sorted(
-        path.name[: -len(".onnx")]
-        for path in voices_dir.glob("*.onnx")
-        if path.with_name(path.name + ".json").is_file()
-    )
+    """Canonical IDs of installed voices, e.g. ``["piper:en_US-lessac-medium"]`` (CP3)."""
+    return voices.installed_voice_ids()
 
 
 def _piper_voice_class() -> Any | None:
@@ -154,13 +149,15 @@ def _probe_ffmpeg() -> tuple[str | None, frozenset[str]]:
 
 
 def check_environment() -> dict:
-    """Report engine availability: ``{"piper", "ffmpeg", "opus", "mp3", "voices"}``.
+    """Report engine availability: ``{"piper", "kokoro", "ffmpeg", "opus", "mp3", "voices"}``.
 
     ``mp3`` says whether the found ffmpeg can encode the mp3 fallback (libmp3lame).
+    ``kokoro`` (CP3) says whether the kokoro-onnx package is installed; CP4A wires the engine.
     """
     ffmpeg, formats = _detect_ffmpeg()
     return {
         "piper": _piper_voice_class() is not None or _piper_executable() is not None,
+        "kokoro": importlib.util.find_spec("kokoro_onnx") is not None,
         "ffmpeg": ffmpeg,
         "opus": "opus" in formats,
         "mp3": "mp3" in formats,
@@ -306,6 +303,12 @@ def synthesize_to_file(text: str, out_path: Path, voice: str, audio_format: str,
     paragraphs = _paragraphs(text)
     if not paragraphs:
         raise TTSError("No text to synthesize")
+    try:
+        engine, voice = voices.parse_voice_id(voice)  # plain names mean Piper
+    except voices.VoiceError as error:
+        raise TTSError(str(error)) from error
+    if engine != "piper":
+        raise TTSError(f"The {engine} engine is not available yet (it arrives in CP4A).")
 
     ffmpeg, formats = _detect_ffmpeg()
     if ffmpeg is None:

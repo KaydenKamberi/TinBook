@@ -16,9 +16,12 @@ Wave 2 ├─ CP2A Replit   server.py + pipeline.py + app.py
         │   merge order: 2A → 2C → 2B
 CP3  Claude ─────────────── integration + review (solo)
         │
-Wave 4 ├─ CP4A Claude   player polish (media keys, edge cases)
-       ├─ CP4B Replit   settings + regenerate + delete UI
-       └─ CP4C Mistral  error-message pass + test cleanup
+Wave 4 ├─ CP4A Claude 1 Kokoro engine + voice catalog/downloads/preview (core, scripts)
+       ├─ CP4B Claude 2 start-from-chapter + priority (jobs, pipeline) + ALL frontend
+       ├─ CP4C Replit   Wave 4 routes + settings (server.py)
+       └─ CP4D Mistral  tests for the CP3 groundwork
+        │   merge order: 4D → 4A → 4B → 4C
+CP4Z Claude + Kayden ────── Wave 4 review + Windows walkthrough
              ★ PHASE 1 MILESTONE: listen to a book on your PC while coding
 
 PHASE 2 — DEVICE (after parts arrive)
@@ -125,7 +128,7 @@ Implement **exactly** these rules. Do not add extra behavior.
 
    Not headings (ordinary prose): `Part of me wanted to stay.`, `Book him, Danno.`, `Part I of my life was hard.`, `Book two was better.`, `did.`
 2. Walk paragraphs. Each heading starts a new section, **even if no text follows it before the next heading** (an empty section); its title is the heading text (strip trailing `.`). Paragraphs before the first heading form a section titled `"Opening"` (omitted if there are none).
-3. **Merge tiny sections:** any section whose body has fewer than 50 words is merged **into the next** section: the next section's title becomes `"<tiny title> — <next title>"` and the tiny body (if any) is prepended. Merging **cascades**: if the merged section is still under 50 words it merges into the next one too, so `PART ONE` + `CHAPTER I` gives `"Part One — Chapter I"` and a run of tiny sections becomes one title. If the last section is still tiny, merge its body into the previous one and **keep the previous title unchanged**.
+3. **Merge tiny sections:** any section whose body has fewer than 50 words is merged **into the next** section: the next section's title becomes `"<tiny title> — <next title>"` and the tiny body (if any) is prepended. Merging **cascades**: if the merged section is still under 50 words it merges into the next one too, so `PART ONE` + `CHAPTER I` gives `"Part One — Chapter I"` and a run of tiny sections becomes one title. A merged title keeps at most 3 parts: when more than 3 headings merge, it is `"<first> — … — <last>"` (CP3: a table of contents whose entries are separate paragraphs used to give a 30-part title). If the last section is still tiny, merge its body into the previous one and **keep the previous title unchanged**.
 4. **Fallback / oversize:** if there are fewer than 2 sections (whole-book fallback), or a section has more than 15,000 words, split that section's body at paragraph boundaries into parts: a part ends at the first paragraph boundary **at or after** 5,000 words (so parts are ≥ 5,000 words, except the last). Titles: `"<title>, part 1"`, `"<title>, part 2"`…; for the whole-book fallback, `"Part 1"`, `"Part 2"`…. If splitting yields only one part, keep the section unchanged. A single paragraph is never cut.
 5. Title-case headings that are ALL CAPS (`"CHAPTER I"` → `"Chapter I"`, `"CHAPTER THE FIRST"` → `"Chapter the First"`); keep the heading's Roman numeral uppercase (`Chapter XII`, bare `IV`). Other words are title-cased even if they look like Roman numerals (`THE DIM MIX` → `The Dim Mix`). Headings that already contain lowercase letters are left alone.
 6. Return `[(title, body_text)]` with bodies joined by `\n\n`. Never return an empty list; never return an empty body (if a section has no text at all, e.g. empty input, its body is its title).
@@ -189,6 +192,7 @@ Implement **exactly** these rules. Do not add extra behavior.
 ---
 
 ## CP3 — Integration & review (solo)
+**Status:** done — see `docs/handoffs/CP3.md`. CP3 also designed Wave 4 (ARCHITECTURE §9–10) and landed its shared groundwork.
 **Owner:** Claude Code · **Depends on:** Wave 2 · **Branch:** `cp3-claude`
 **Owns:** anything (integration checkpoint — see CLAUDE.md)
 
@@ -202,21 +206,129 @@ Implement **exactly** these rules. Do not add extra behavior.
 
 ---
 
-## Wave 4 — Polish (parallel)
+## Wave 4 — Voice options, start from a chapter, polish (parallel)
 
-### CP4A — Player polish
-**Owner:** Claude Code · **Branch:** `cp4a-claude` · **Owns:** `desktop/static/app.js`, `desktop/static/style.css`, `desktop/templates/index.html`
-Keyboard shortcuts (D-9), Media Session API (title/artist/chapter, play/pause/seek handlers), buffering/error states, waiting-for-chapter state polish. Leave a `<div id="settings-root"></div>` in the Library view and a `<script src="/static/settings.js">` tag for CP4B. **Do this first and push early** so CP4B can hook in.
+Four checkpoints, four branches, **no file is owned by two of them**. Everything they share already exists on `main` from CP3: the `"skipped"` status (`core/models.py`, `core/library.py`), voice-ID parsing and the catalog (`core/voices.py`, `core/voice_catalog.json`), and stubs with the exact signatures for everything that is still to be written. Contracts: ARCHITECTURE §5, §6, §9 (voices) and §10 (start from a chapter). PRD: D-14–D-25, P-11.
 
-### CP4B — Settings, regenerate, delete
-**Owner:** Replit · **Branch:** `cp4b-replit` · **Owns:** `desktop/static/settings.js`, `desktop/server.py` (only if a route needs fixing)
-Renders into `#settings-root`: voice dropdown from `/api/voices` (saved to `config.local.json` via a new `PUT /api/settings` — this is an approved contract addition), per-book Regenerate (with voice) and Delete (with confirm). Show `/api/health` environment warnings (e.g. "Opus not available").
+| File(s) | Owner |
+|---|---|
+| `core/voices.py`, `core/voice_catalog.json`, `core/tts.py`, `core/tts_kokoro.py`, `scripts/download_voice.py`, `scripts/verify_voice_catalog.py`, `scripts/smoke_test.py`, `tests/test_tts.py`, `tests/test_voices.py`, `tests/test_tts_kokoro.py`, `tests/test_download_voice.py` | CP4A |
+| `core/jobs.py`, `core/pipeline.py`, `tests/test_jobs.py`, `tests/test_pipeline.py`, `desktop/templates/*`, `desktop/static/*` | CP4B |
+| `desktop/server.py`, `desktop/settings.py`, `tests/test_server.py` | CP4C |
+| `tests/conftest.py`, `tests/test_voice_ids.py`, `tests/test_voice_catalog_file.py`, `tests/test_skipped_status.py`, `tests/test_check_real_books.py` | CP4D |
+| everything else (incl. `core/models.py`, `core/library.py`, `core/config.py`, `core/gutenberg.py`, `core/chapters.py`, `core/progress.py`, `desktop/app.py`, `requirements.txt`, `config.json`, `tests/fixtures/*`, other tests, docs except your own handoff) | nobody — read only |
 
-### CP4C — Error-message pass & test cleanup
-**Owner:** Mistral · **Branch:** `cp4c-mistral` · **Owns:** `tests/*` only
-Make every test file runnable independently, remove duplicate fixtures, add a `tests/conftest.py` with a shared `tmp_library` fixture (sets `TINBOOK_LIBRARY_DIR`, clears config cache). No production code changes.
+Each checkpoint writes `docs/handoffs/CP4<x>.md`. A contract you think is wrong → implement it as written and file a Contract change request. `kokoro-onnx` is already in `requirements.txt` — reinstall (`pip install -r requirements.txt`) before starting.
 
-**Merge Wave 4:** 4C → 4A → 4B. ★ **Phase 1 done.**
+### CP4A — Kokoro engine, voice catalog, downloads & preview (backend)
+**Owner:** Claude Code (session 1) · **Depends on:** CP3 · **Branch:** `cp4a-claude`
+**Owns:** `core/voices.py`, `core/voice_catalog.json`, `core/tts.py`, `core/tts_kokoro.py` (new), `scripts/download_voice.py`, `scripts/verify_voice_catalog.py` (new), `scripts/smoke_test.py`, `tests/test_tts.py`, `tests/test_voices.py`, `tests/test_tts_kokoro.py` (new), `tests/test_download_voice.py`
+**Reads:** everything else — especially `core/jobs.py`, `core/pipeline.py` (CP4B) and `desktop/server.py` (CP4C), which call your functions.
+
+**Tasks**
+1. **Kokoro engine** (`core/tts_kokoro.py`) exactly per ARCHITECTURE §9.2: lazy `import kokoro_onnx`, one cached `Kokoro` per process behind a lock, `lang` from the name's first letter, paragraph-by-paragraph float→int16 into a 24 kHz mono WAV with 0.4 s pauses. `tts.synthesize_to_file` dispatches on `voices.parse_voice_id(voice)[0]`; Piper behavior is unchanged. `check_environment()["kokoro"]` becomes "the engine can actually be used" (import succeeds). `synthesize_to_file` must be safe from two threads at once (job worker + preview).
+2. **`core/voices.py`**: implement the six CP4A stubs exactly per §9.4 (`catalog`, `get_voice`, `start_download`, `download_states`, `delete_voice`, `preview_file`). Keep the CP3 functions' behavior (CP4D tests them).
+3. **`scripts/download_voice.py`**: accept any voice ID (`en_US-lessac-medium`, `piper:en_US-ryan-high`, `kokoro:af_heart`), downloading the voice's pack with the same code as `start_download` (run synchronously) and a console progress line; exit 1 with a clear message on failure. `run.bat` still calls it with `en_US-lessac-medium`.
+4. **`scripts/verify_voice_catalog.py`** (new): for every catalog file, request the URL (HEAD, follow redirects), print a table `pack | path | catalog size | real size | OK/DIFF/ERROR`, exit 1 if any ERROR. `--write` updates `size_bytes` from the real `Content-Length`. `--hash` downloads each file, computes SHA-256, and (with `--write`) stores it and sets `verified: true`. huggingface.co is blocked in the cloud sandboxes, so Kayden runs it on Windows; write exact commands in the handoff.
+5. Re-check the Kokoro grades in `voice_catalog.json` against `hexgrad/Kokoro-82M` `VOICES.md` if your network allows; otherwise note it as open.
+6. **`scripts/smoke_test.py`**: also synthesize "Hello from Tinbook." with `kokoro:af_heart` when the Kokoro pack is installed (else print SKIP), and report its real-time factor.
+7. **Tests** (no network, no real models): fake `kokoro_onnx` via `sys.modules`; HTTP via `responses`. Cover at least: Kokoro WAV format, rate, pauses, `lang` mapping, missing package → `TTSError`, Piper unaffected; downloads (progress numbers, already-installed → done without HTTP, second call while running returns the same state, sha256 mismatch → error and no `.part` left, resume skips finished files, missing Content-Length); delete (Kokoro pack removes all Kokoro IDs + previews; refuses while downloading or when not installed); preview cached and re-made after delete; `catalog()` order and uncatalogued Piper voices; `get_voice` errors.
+8. If your sandbox lets you, run one real Kokoro synthesis and record the real-time factor; if it doesn't, say so.
+
+**Acceptance criteria**
+- `pytest` passes with no network and no real models.
+- Existing books with plain voice names (`en_US-lessac-medium`) still generate.
+- On Kayden's Windows: `python scripts\download_voice.py kokoro:af_heart` shows progress and finishes (~354 MB); `python scripts\smoke_test.py` shows Piper and Kokoro PASS; `python scripts\verify_voice_catalog.py` prints OK for every file (after `--write` if sizes differed).
+
+### CP4B — Start from a chapter, priority generation, and the whole frontend
+**Owner:** Claude Code (session 2) · **Depends on:** CP3 · **Branch:** `cp4b-claude`
+**Owns:** `core/jobs.py`, `core/pipeline.py`, `tests/test_jobs.py`, `tests/test_pipeline.py` (new), `desktop/templates/index.html`, `desktop/static/*` (`app.js`, `style.css`, any new `.js`/`.css`)
+**Reads:** `core/voices.py` (CP4A implements it — code against §9.4), `desktop/server.py` (CP4C implements the new routes — code against §6), everything else.
+
+**Backend tasks**
+1. `pipeline.preview_book`, `add_book(start_chapter=…)`, `generate_chapter`, `generate_skipped` exactly per ARCHITECTURE §10.2–10.4 (text cache in `<library_dir>/.cache/`, 24 h). `regenerate_book` already keeps skipped chapters — keep it that way.
+2. `JobQueue.prioritize` and the per-book cursor per §10.4. The worker may need to switch books between chapters; keep "save after every chapter", "reload before save", resume-on-start, and retry-once behavior.
+3. Tests in `tests/test_jobs.py` (threaded, like the existing ones) and `tests/test_pipeline.py` (mock `gutenberg` and `jobs.get_queue`): skipped never generated; start chapter → earlier chapters skipped + progress at start; preview uses and deletes the cache; bad `start_chapter` (`-1`, `len`, `True`, `"2"`) → `ValueError`; `generate_chapter` on skipped/error/pending/done; prioritize within a book (jump ahead, then continues, then wraps), across books (other book resumes after), newer prioritize wins.
+
+**Frontend tasks** (vanilla JS; window ~420 px; light + dark)
+4. **Add dialog** (Search → Add): voice dropdown of installed voices from `GET /api/voices` (grouped Piper/Kokoro, preselected `default`, falling back to the first installed voice; a "Get more voices" link opens the Voices screen); "Start from" select filled from `GET /api/preview/<id>` (spinner while loading; if preview fails you can still add from the beginning); Add → `POST /api/books` with `voice` and `start_chapter`.
+5. **Voices screen** (D-16–D-19): catalog grouped by engine, recommended first; each row: name, gender · accent, quality note, size in MB, Installed badge. Download button with a progress bar (poll `GET /api/voices` every 1 s while any `download.state` is `"downloading"`; show `error`); Preview (installed only; separate `Audio` object; pauses the book); Delete with confirm ("This removes all N Kokoro voices (354 MB)" for Kokoro). Warn when `engines.kokoro` is false.
+6. **Player / library for Feature B** (§10.4): skipped chapters show "Skipped" + **Generate**; **Generate all skipped (N)**; any jump or auto-advance to a chapter without audio calls `POST …/chapters/<n>/generate` once, then the waiting state "Generating chapter N…"; library cards show "· N skipped". A book that opens at its start chapter must not try to play skipped chapters on "previous".
+7. **Book actions**: Regenerate with a chosen voice and Delete (confirm) from the library card or player.
+8. **Health warnings** from `GET /api/health`: no ffmpeg, no Opus (mp3 fallback), no voices installed, Kokoro unavailable.
+9. **Player polish** (old CP4A): keyboard D-9 (Space play/pause, ←/→ −30/+30 s; ignored while typing in an input/select); Media Session API (title = chapter, artist = author, album = book; play, pause, seekbackward, seekforward, previoustrack, nexttrack); buffering spinner on `waiting`/`stalled`; clear audio error states.
+10. Build against the contracts. Use a scratch mock server outside the repo if you need one; **commit no mocks**.
+
+**Acceptance criteria**
+- `pytest` passes.
+- Checked in Chromium (Playwright) against a server or scratch mock: add from chapter 5 → player opens at chapter 5 with chapters 1–4 "Skipped"; Generate on chapter 2 → it is generated next; jumping to chapter 20 while chapter 6 is generating → 20 is next, then 21…; voice download progress, preview and delete; keyboard and Media Session handlers.
+- After the wave is merged, Kayden can do all of the above on Windows (CP4Z).
+
+### CP4C — Wave 4 routes and settings
+**Owner:** Replit · **Depends on:** CP3 · **Branch:** `cp4c-replit`
+**Owns:** `desktop/server.py`, `desktop/settings.py` (new), `tests/test_server.py`
+**Reads:** all of `core/` (`voices` and the new `pipeline`/`jobs` functions are stubs on `main` until CP4A/CP4B merge — mock them in tests), ARCHITECTURE §6, §9, §10.
+
+**Tasks**
+1. `desktop/settings.py` exactly per ARCHITECTURE §9.5; `PUT /api/settings` uses it.
+2. Every new or changed route in §6, with the exact request/response shapes and status codes:
+   - `GET /api/voices` (new shape: `voices` = list of VoiceView, `default` canonical, `engines` from `check_environment()`);
+   - `POST /api/voices/<voice_id>/download` (202 downloading / 200 installed);
+   - `DELETE /api/voices/<voice_id>`;
+   - `GET /api/voices/<voice_id>/preview` (`send_file`, `conditional=True`, `audio/ogg` or `audio/mpeg`);
+   - `GET /api/preview/<int:gutenberg_id>`;
+   - `POST /api/books` with optional `start_chapter` (must be an int; `bool` → 400) and the last-used voice;
+   - `POST /api/books/<id>/chapters/<int:n>/generate`;
+   - `POST /api/books/<id>/generate-skipped`;
+   - `POST …/regenerate` remembers the voice;
+   - `BookView` gets `chapters_skipped`.
+3. Error mapping per §6: `ValueError` → 400, `IndexError` from `generate_chapter` → 404, voice routes in the order normalize (400) → `get_voice` (404) → action (409). A failed settings write must not fail an add/regenerate (log a warning).
+4. Keep every existing route and test working; keep the CP3 additions in `tests/test_server.py` (close hook, 409 race, regenerate format, canonical voices).
+5. Tests with the Flask test client; monkeypatch `voices.*`, `pipeline.preview_book/generate_chapter/generate_skipped`; voice IDs URL-encoded (`kokoro%3Aaf_heart`); no network.
+
+**Acceptance criteria**
+- `pytest` passes.
+- In `--browser` mode, `curl` returns the documented shapes and codes for every new route. The routes that need CP4A/CP4B code may return 500 (`NotImplementedError`) before those merge; say which in the handoff.
+
+### CP4D — Tests for the CP3 groundwork
+**Owner:** Mistral · **Depends on:** CP3 · **Branch:** `cp4d-mistral`
+**Owns:** `tests/conftest.py` (new), `tests/test_voice_ids.py` (new), `tests/test_voice_catalog_file.py` (new), `tests/test_skipped_status.py` (new), `tests/test_check_real_books.py` (new). **No other file.** No production code changes. Every test must pass on `main` as of CP3.
+
+**`tests/conftest.py`** — two fixtures, **not** `autouse`:
+- `tmp_library(monkeypatch, tmp_path)`: `monkeypatch.setattr(core.config, "_ROOT_DIR", tmp_path)`; `monkeypatch.delenv(name, raising=False)` for `TINBOOK_LIBRARY_DIR`, `TINBOOK_VOICES_DIR`, `TINBOOK_DEFAULT_VOICE`, `TINBOOK_PORT`; `get_config.cache_clear()`; `yield get_config().library_dir`; then `get_config.cache_clear()`.
+- `tmp_voices_dir(tmp_library)`: `yield get_config().voices_dir`.
+
+**`tests/test_voice_ids.py`** — use `pytest.mark.parametrize` with exactly these cases:
+- Valid: `voices.parse_voice_id(x)` returns the tuple and `voices.normalize_voice_id(x)` returns `"engine:name"`:
+  `"en_US-lessac-medium"` → `("piper", "en_US-lessac-medium")`; `"piper:en_US-lessac-medium"` → same; `"piper:en_US-ryan-high"`; `"piper:en_GB-northern_english_male-medium"`; `"piper:en_US-amy-x_low"`; `"yue_HK-test-medium"` → piper; `"kokoro:af_heart"` → `("kokoro", "af_heart")`; `"kokoro:bm_george"`; `"kokoro:ef_dora"`.
+- `normalize_voice_id(normalize_voice_id(x)) == normalize_voice_id(x)` for every valid case.
+- Invalid: each raises `voices.VoiceError` from both functions, and `voices.is_installed(x)` returns `False` without raising:
+  `""`, `None`, `42`, `["piper:x"]`, `"kokoro:"`, `"piper:"`, `":af_heart"`, `"espeak:af_heart"`, `"Kokoro:af_heart"`, `"kokoro:AF_heart"`, `"kokoro:af-heart"`, `"kokoro:afheart"`, `"kokoro:a_heart"`, `"af_heart"`, `"en_US-lessac"`, `"en_us-lessac-medium"`, `" en_US-lessac-medium"`, `"en_US-lessac-medium "`, `"piper:kokoro:af_heart"`, `"kokoro:af_heart:extra"`, `"kokoro:af_heart2"`.
+- With `tmp_voices_dir`: after creating empty files `en_US-lessac-medium.onnx` and `en_US-lessac-medium.onnx.json`, `is_installed` is `True` for both `"en_US-lessac-medium"` and `"piper:en_US-lessac-medium"`; with only the `.onnx` file it is `False`. `"kokoro:af_heart"` is `False` until both `kokoro/kokoro-v1.0.onnx` and `kokoro/voices-v1.0.bin` exist, then `True`; `"kokoro:ef_dora"` stays `False`.
+
+**`tests/test_voice_catalog_file.py`** — one test function per rule 1–11 in ARCHITECTURE §9.3, named `test_rule_01_…` to `test_rule_11_…`. Load the file with `json.loads((ROOT / "core" / "voice_catalog.json").read_text(encoding="utf-8"))` where `ROOT = Path(__file__).resolve().parent.parent`. For rule 3 use `voices.normalize_voice_id`. For rule 6 split the Piper name as `lang_region, rest = name.split("-", 1)`, `speaker, quality = rest.rsplit("-", 1)`, `lang = lang_region.split("_")[0]`. For rule 11 read `ROOT / "config.json"`. Assertion messages must name the offending voice or file.
+
+**`tests/test_skipped_status.py`**:
+1. Parametrized table for `Book(...)` with chapters of these statuses → `(chapters_done(), chapters_skipped(), is_complete())`: `[]` → `(0, 0, True)`; `["skipped", "skipped"]` → `(0, 2, True)`; `["done", "skipped", "pending"]` → `(1, 1, False)`; `["done", "error"]` → `(1, 0, False)`; `["done", "done"]` → `(2, 0, True)`; `["skipped", "error"]` → `(0, 1, False)`.
+2. `Chapter.from_dict({"index": 0, "title": "A", "word_count": 1, "status": "skipped"}).status == "skipped"`, and a `Book` with a skipped chapter survives `Book.from_dict(book.to_dict())` unchanged.
+3. With `tmp_library`: `library.create_book(SearchResult(84, "Frankenstein", ["Shelley, Mary"], "en", 1, None), "raw", [("One", "a b"), ("Two", "c d"), ("Three", "e f")], "en_US-lessac-medium", "opus")`; set chapter 0 to `"skipped"`, `library.save_book`; `library.get_book` returns statuses `["skipped", "pending", "pending"]`. Then write `book.json` by hand with chapter 0 status `"Skipped"` → `library.get_book` raises `LibraryError`; again with `"skipped "` → `LibraryError`.
+4. `jobs._needs_audio(book, 0)` is `False` when chapter 0 is `"skipped"` and `True` when it is `"pending"` (build the `Book` in memory; no files needed).
+5. With `tmp_voices_dir`: create empty `en_US-lessac-medium.onnx` + `.onnx.json`; create a book as in 3 with statuses `["skipped", "done", "error"]` and an audio file `library.chapter_audio_path(book.id, 1, "opus")` (create its parent folder); `queue = unittest.mock.Mock()`; `monkeypatch.setattr(pipeline.jobs, "get_queue", lambda: queue)`; `pipeline.regenerate_book(book.id, "en_US-lessac-medium")` returns a book with statuses `["skipped", "pending", "pending"]`, every `duration_sec` `None`, `voice == "piper:en_US-lessac-medium"`, `status == "queued"`; the `audio` folder exists and is empty; `queue.enqueue.assert_called_once_with(book.id)`.
+
+**`tests/test_check_real_books.py`** — load the script with `importlib.util.spec_from_file_location("check_real_books", ROOT / "scripts" / "check_real_books.py")`. Monkeypatch `core.gutenberg.get_metadata` to return `SearchResult(84, "Frankenstein", ["Shelley, Mary Wollstonecraft"], "en", 1, "u")` and `core.gutenberg.download_text` to return the text of `tests/fixtures/sample_book.txt`. Use `capsys`.
+1. `main(["84"])` returns `0`; stdout contains exactly these lines: `=== Book 84`, `Title:      Frankenstein`, `Authors:    Shelley, Mary Wollstonecraft`, `Chapters:   3  (words per chapter: min 279, max 327)`, `First 3:`, `    1. Opening — Part One — Chapter I  (327 words)`, `    2. Chapter II  (279 words)`, `    3. Chapter III  (302 words)`, `Summary: 84 OK`. A line starts with `Downloaded: 7,056 characters (` (don't check the seconds).
+2. `main([])` checks 84, 2554, 1342 in that order: the last line is `Summary: 84 OK, 2554 OK, 1342 OK`.
+3. `get_metadata` raising `gutenberg.GutenbergError("offline")` → `main(["84"])` returns `1`, stdout has `FAILED to download: offline` and `Summary: 84 FAILED`.
+4. `--all`: `main(["--all", "84"])` prints `All titles:` and no line containing `last:`.
+5. More than 5 chapters: monkeypatch the module's `chapters.split_chapters` to return `[(f"T{i}", "w " * i) for i in range(1, 8)]`; `main(["84"])` prints `First 5:`, the line `    5. T5  (5 words)`, no `T6` line, and `  ...  last: T7`.
+
+**Acceptance criteria:** `pytest` passes on the branch (all files, not just yours); only the five files above are added; no test touches the network.
+
+**Merge Wave 4:** 4D → 4A → 4B → 4C (no file overlaps, so no conflicts; this order keeps `pytest` green after each merge). Then **CP4Z**.
+
+### CP4Z — Wave 4 review & Windows walkthrough (solo)
+**Owner:** Claude Code (+ Kayden on Windows) · **Branch:** `cp4z-claude`
+Same as the Wave 2 review: ownership, contracts, acceptance criteria, trial merge, full `pytest`, live `--browser` checks of every route, every `fetch()` in the frontend checked against `server.py`. Then Kayden on Windows: download a Kokoro voice, add a book from chapter 5 with it, Generate a skipped chapter, jump ahead, close and reopen. Fix what breaks. ★ **Phase 1 done.**
 
 ---
 
@@ -243,11 +355,11 @@ Make every test file runnable independently, remove duplicate fixtures, add a `t
 ### CP6C — Battery client + desktop "Send to Tinbook"
 **Owner:** Mistral · **Branch:** `cp6c-mistral` · **Owns:** `device/power.py`, `desktop/device_sync.py`, `tests/test_device_sync.py`
 - `power.py`: `battery_percent() -> int | None`, `is_charging() -> bool | None` by sending `get battery\n` and `get battery_charging\n` to `pisugar-server` over TCP `127.0.0.1:8423` and parsing the reply (`battery: 87.5` → 87). Return None on any error. Verify the port/commands against the PiSugar docs; note in handoff if different.
-- `device_sync.py`: `find_device() -> Path | None` — Windows: check drive letters `D:`–`Z:` for volume label `TINBOOK` via `ctypes.windll.kernel32.GetVolumeInformationW`; Linux: look for `/media/*/TINBOOK` and `/run/media/*/TINBOOK`. `sync_books(book_ids) -> dict`: for each **ready** book, copy `book.json` and `audio/` to `<drive>/library/<id>/` (skip audio files with identical size), then merge progress with `core.progress.newer()` and write the winner to **both** sides. Returns `{"copied": [...], "skipped": [...], "progress_updated": [...], "errors": [...]}`. Also add routes `GET /api/device` and `POST /api/device/sync` to `desktop/server.py` (approved exception: only add these two routes).
+- `device_sync.py`: `find_device() -> Path | None` — Windows: check drive letters `D:`–`Z:` for volume label `TINBOOK` via `ctypes.windll.kernel32.GetVolumeInformationW`; Linux: look for `/media/*/TINBOOK` and `/run/media/*/TINBOOK`. `sync_books(book_ids) -> dict`: for each **ready** book (every chapter done or skipped), copy `book.json` and `audio/` to `<drive>/library/<id>/` (skip audio files with identical size; **skipped chapters have no audio and are not an error**, ARCHITECTURE §8 / PRD P-11), then merge progress with `core.progress.newer()` and write the winner to **both** sides. Returns `{"copied": [...], "skipped": [...], "progress_updated": [...], "errors": [...]}`. Also add routes `GET /api/device` and `POST /api/device/sync` to `desktop/server.py` (approved exception: only add these two routes).
 
 ## CP7 — Device app (solo)
 **Owner:** Claude Code · **Branch:** `cp7-claude` · **Owns:** `device/main.py`, `device/usb_sync.py`, `scripts/pi/tinbook.service`, plus integration fixes anywhere.
-State machine: Library ↔ Now Playing ↔ Menu (Bluetooth, Speed, Sync mode, Battery, Shut down) ↔ Sync mode. Implements PRD P-1…P-10 and the button map in HARDWARE.md §5. `usb_sync.py`: enter = stop player, save progress, `sync`, unmount `/mnt/tinbook`, `modprobe g_mass_storage file=<img> removable=1 stall=0`; exit = `modprobe -r g_mass_storage`, `fsck.vfat -a <img>`, remount. Needs a sudoers drop-in limited to exactly these commands (include it in setup notes). systemd user service with `Restart=on-failure`.
+State machine: Library ↔ Now Playing ↔ Menu (Bluetooth, Speed, Sync mode, Battery, Shut down) ↔ Sync mode. Implements PRD P-1…P-11 (P-11: chapters that aren't "done" — e.g. skipped — are skipped by next/previous/auto-advance, ARCHITECTURE §8) and the button map in HARDWARE.md §5. `usb_sync.py`: enter = stop player, save progress, `sync`, unmount `/mnt/tinbook`, `modprobe g_mass_storage file=<img> removable=1 stall=0`; exit = `modprobe -r g_mass_storage`, `fsck.vfat -a <img>`, remount. Needs a sudoers drop-in limited to exactly these commands (include it in setup notes). systemd user service with `Restart=on-failure`.
 
 ## CP8 — Assembly & field test
 **Owner:** Kayden + Claude Code · **Owns:** `docs/handoffs/CP8.md`, tuning fixes

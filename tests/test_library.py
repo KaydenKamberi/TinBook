@@ -109,6 +109,14 @@ def test_list_books_sorted_and_skips_unreadable(metadata, caplog) -> None:
     assert caplog.text.count("Skipping unreadable book folder") == 4
 
 
+def test_skipped_chapter_status_round_trips(metadata) -> None:
+    """CP3: "skipped" is a valid stored chapter status (PRD D-23)."""
+    book = library.create_book(metadata, "raw", [("One", "text"), ("Two", "more")], "voice", "opus")
+    book.chapters[0].status = "skipped"
+    library.save_book(book)
+    assert [c.status for c in library.get_book(book.id).chapters] == ["skipped", "pending"]
+
+
 def test_list_books_quietly_ignores_dot_folders_and_files(metadata, caplog) -> None:
     """CP3: hidden folders (.cache/, staging .x.tmp) and files like pg_catalog.csv are not books."""
     book = library.create_book(metadata, "raw", [("One", "text")], "voice", "opus")

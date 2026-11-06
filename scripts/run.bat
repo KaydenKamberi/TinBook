@@ -25,9 +25,16 @@ if not exist ".venv\Scripts\activate.bat" (
 
 call ".venv\Scripts\activate.bat"
 
-rem Install dependencies until one install has fully succeeded.
-rem The marker is written only after pip succeeds, so a failed install is retried next run.
-if not exist ".venv\.installed" (
+rem Install dependencies when they changed since the last successful install.
+rem The marker is a copy of requirements.txt, written only after pip succeeds,
+rem so a failed install is retried next run and new requirements get installed.
+set NEED_INSTALL=0
+if not exist ".venv\.installed" set NEED_INSTALL=1
+if exist ".venv\.installed" (
+    fc /b requirements.txt ".venv\.installed" >nul 2>&1
+    if errorlevel 1 set NEED_INSTALL=1
+)
+if "%NEED_INSTALL%"=="1" (
     echo Installing dependencies...
     python -m pip install -r requirements.txt
     if errorlevel 1 (
@@ -35,7 +42,7 @@ if not exist ".venv\.installed" (
         pause
         exit /b 1
     )
-    type nul > ".venv\.installed"
+    copy /y requirements.txt ".venv\.installed" >nul
 )
 
 rem Download the default voice if it is missing.

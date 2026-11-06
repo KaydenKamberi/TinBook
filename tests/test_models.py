@@ -88,3 +88,12 @@ def test_slugify_empty_falls_back_to_book() -> None:
 
 def test_now_iso_is_utc_z_timestamp() -> None:
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", now_iso())
+
+def test_skipped_chapters_count_as_complete_but_not_done() -> None:
+    """CP3: a "skipped" chapter is neither done nor missing; ready = all done or skipped."""
+    chapters = [Chapter(0, "A", 10, "skipped"), Chapter(1, "B", 10, "done", 3.0), Chapter(2, "C", 10, "pending")]
+    book = Book("1-x", 1, "X", [], "v", "opus", "generating", chapters, "2026-01-01T00:00:00Z")
+    assert (book.chapters_done(), book.chapters_skipped(), book.is_complete()) == (1, 1, False)
+    book.chapters[2].status = "done"
+    assert book.is_complete()
+    assert Book.from_dict(book.to_dict()).chapters[0].status == "skipped"

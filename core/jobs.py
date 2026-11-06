@@ -34,6 +34,8 @@ def _bitrate_for(audio_format: str) -> str:
 
 def _needs_audio(book: Book, index: int) -> bool:
     chapter = book.chapters[index]
+    if chapter.status == "skipped":  # never generated unless the user asks (PRD D-23)
+        return False
     if chapter.status != "done":
         return True
     return not library.chapter_audio_path(book.id, index, book.audio_format).is_file()
@@ -100,6 +102,13 @@ class JobQueue:
                 "current": dict(self._current) if self._current else None,
                 "queued": list(self._queue),
             }
+
+    def prioritize(self, book_id: str, chapter_index: int) -> None:
+        """Generate this chapter next, then continue in order from it (PRD D-25).
+
+        Contract: ARCHITECTURE §5 core/jobs.py. Implemented in CP4B.
+        """
+        raise NotImplementedError("JobQueue.prioritize is implemented in CP4B")
 
     def stop(self) -> None:
         """Ask the worker to stop after the current chapter and wait briefly for it."""

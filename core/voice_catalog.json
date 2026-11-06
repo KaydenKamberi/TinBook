@@ -1,0 +1,510 @@
+{
+  "schema_version": 1,
+  "_notes": [
+    "Contract: docs/ARCHITECTURE.md §9.3. Owned by CP4A after CP3.",
+    "Kokoro sizes and sha256 were measured from the real files (release model-files-v1.1, 2026-11-06).",
+    "Kokoro grades are from hexgrad/Kokoro-82M VOICES.md (af_heart = A confirmed online; others to re-check).",
+    "Piper sizes are estimates (verified: false) until scripts/verify_voice_catalog.py --write is run (CP4A)."
+  ],
+  "packs": {
+    "piper:en_US-lessac-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-lessac-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-lessac-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-lessac-high": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-lessac-high.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx",
+          "size_bytes": 114000000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-lessac-high.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-ryan-high": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-ryan-high.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx",
+          "size_bytes": 121000000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-ryan-high.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-ljspeech-high": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-ljspeech-high.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx",
+          "size_bytes": 114000000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-ljspeech-high.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-amy-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-amy-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/medium/en_US-amy-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-amy-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-joe-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-joe-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/joe/medium/en_US-joe-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-joe-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/joe/medium/en_US-joe-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-hfc_female-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-hfc_female-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-hfc_female-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_US-hfc_male-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_US-hfc_male-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_US-hfc_male-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_GB-alba-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_GB-alba-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alba/medium/en_GB-alba-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_GB-alba-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alba/medium/en_GB-alba-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_GB-cori-high": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_GB-cori-high.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/cori/high/en_GB-cori-high.onnx",
+          "size_bytes": 114000000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_GB-cori-high.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/cori/high/en_GB-cori-high.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_GB-northern_english_male-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_GB-northern_english_male-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/northern_english_male/medium/en_GB-northern_english_male-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_GB-northern_english_male-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/northern_english_male/medium/en_GB-northern_english_male-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "piper:en_GB-jenny_dioco-medium": {
+      "engine": "piper",
+      "files": [
+        {
+          "path": "en_GB-jenny_dioco-medium.onnx",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/jenny_dioco/medium/en_GB-jenny_dioco-medium.onnx",
+          "size_bytes": 63200000,
+          "sha256": null,
+          "verified": false
+        },
+        {
+          "path": "en_GB-jenny_dioco-medium.onnx.json",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/jenny_dioco/medium/en_GB-jenny_dioco-medium.onnx.json",
+          "size_bytes": 5000,
+          "sha256": null,
+          "verified": false
+        }
+      ]
+    },
+    "kokoro-v1.0": {
+      "engine": "kokoro",
+      "files": [
+        {
+          "path": "kokoro/kokoro-v1.0.onnx",
+          "url": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1/kokoro-v1.0.onnx",
+          "size_bytes": 325505369,
+          "sha256": "beb0d1848dee9a49da392cc3df26958d46cfa35d321edf434f52949153f0df3a",
+          "verified": true
+        },
+        {
+          "path": "kokoro/voices-v1.0.bin",
+          "url": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1/voices-v1.0.bin",
+          "size_bytes": 28214398,
+          "sha256": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
+          "verified": true
+        }
+      ]
+    }
+  },
+  "voices": [
+    {
+      "id": "piper:en_US-lessac-medium",
+      "engine": "piper",
+      "pack": "piper:en_US-lessac-medium",
+      "name": "Lessac",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Piper medium · clear and fast · the original default",
+      "recommended": true
+    },
+    {
+      "id": "piper:en_US-lessac-high",
+      "engine": "piper",
+      "pack": "piper:en_US-lessac-high",
+      "name": "Lessac (high)",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Piper high · smoother than medium, slower to generate",
+      "recommended": true
+    },
+    {
+      "id": "piper:en_US-ryan-high",
+      "engine": "piper",
+      "pack": "piper:en_US-ryan-high",
+      "name": "Ryan (high)",
+      "gender": "male",
+      "accent": "American",
+      "quality": "Piper high · warm male narrator",
+      "recommended": true
+    },
+    {
+      "id": "piper:en_US-ljspeech-high",
+      "engine": "piper",
+      "pack": "piper:en_US-ljspeech-high",
+      "name": "LJ (high)",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Piper high · audiobook-style reader",
+      "recommended": false
+    },
+    {
+      "id": "piper:en_US-amy-medium",
+      "engine": "piper",
+      "pack": "piper:en_US-amy-medium",
+      "name": "Amy",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Piper medium · bright and clear",
+      "recommended": false
+    },
+    {
+      "id": "piper:en_US-joe-medium",
+      "engine": "piper",
+      "pack": "piper:en_US-joe-medium",
+      "name": "Joe",
+      "gender": "male",
+      "accent": "American",
+      "quality": "Piper medium · plain and steady",
+      "recommended": false
+    },
+    {
+      "id": "piper:en_US-hfc_female-medium",
+      "engine": "piper",
+      "pack": "piper:en_US-hfc_female-medium",
+      "name": "HFC Female",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Piper medium · calm",
+      "recommended": false
+    },
+    {
+      "id": "piper:en_US-hfc_male-medium",
+      "engine": "piper",
+      "pack": "piper:en_US-hfc_male-medium",
+      "name": "HFC Male",
+      "gender": "male",
+      "accent": "American",
+      "quality": "Piper medium · calm",
+      "recommended": false
+    },
+    {
+      "id": "piper:en_GB-alba-medium",
+      "engine": "piper",
+      "pack": "piper:en_GB-alba-medium",
+      "name": "Alba",
+      "gender": "female",
+      "accent": "Scottish",
+      "quality": "Piper medium · gentle Scottish accent",
+      "recommended": true
+    },
+    {
+      "id": "piper:en_GB-cori-high",
+      "engine": "piper",
+      "pack": "piper:en_GB-cori-high",
+      "name": "Cori (high)",
+      "gender": "female",
+      "accent": "British",
+      "quality": "Piper high · clear British reader",
+      "recommended": true
+    },
+    {
+      "id": "piper:en_GB-northern_english_male-medium",
+      "engine": "piper",
+      "pack": "piper:en_GB-northern_english_male-medium",
+      "name": "Northern English Male",
+      "gender": "male",
+      "accent": "Northern English",
+      "quality": "Piper medium · northern English accent",
+      "recommended": false
+    },
+    {
+      "id": "piper:en_GB-jenny_dioco-medium",
+      "engine": "piper",
+      "pack": "piper:en_GB-jenny_dioco-medium",
+      "name": "Jenny",
+      "gender": "female",
+      "accent": "British",
+      "quality": "Piper medium · light British accent",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:af_heart",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Heart",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Kokoro · grade A · best-rated Kokoro voice",
+      "recommended": true
+    },
+    {
+      "id": "kokoro:af_bella",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Bella",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Kokoro · grade A- · expressive",
+      "recommended": true
+    },
+    {
+      "id": "kokoro:af_nicole",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Nicole",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Kokoro · grade B- · soft, close-mic (ASMR-like)",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:af_aoede",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Aoede",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Kokoro · grade C+",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:af_kore",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Kore",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Kokoro · grade C+",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:af_sarah",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Sarah",
+      "gender": "female",
+      "accent": "American",
+      "quality": "Kokoro · grade C+",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:am_michael",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Michael",
+      "gender": "male",
+      "accent": "American",
+      "quality": "Kokoro · grade C+ · best-rated American male",
+      "recommended": true
+    },
+    {
+      "id": "kokoro:am_fenrir",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Fenrir",
+      "gender": "male",
+      "accent": "American",
+      "quality": "Kokoro · grade C+",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:am_puck",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Puck",
+      "gender": "male",
+      "accent": "American",
+      "quality": "Kokoro · grade C+",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:bf_emma",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Emma",
+      "gender": "female",
+      "accent": "British",
+      "quality": "Kokoro · grade B- · best-rated British voice",
+      "recommended": true
+    },
+    {
+      "id": "kokoro:bf_isabella",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Isabella",
+      "gender": "female",
+      "accent": "British",
+      "quality": "Kokoro · grade C",
+      "recommended": false
+    },
+    {
+      "id": "kokoro:bm_george",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "George",
+      "gender": "male",
+      "accent": "British",
+      "quality": "Kokoro · grade C · best-rated British male",
+      "recommended": true
+    },
+    {
+      "id": "kokoro:bm_fable",
+      "engine": "kokoro",
+      "pack": "kokoro-v1.0",
+      "name": "Fable",
+      "gender": "male",
+      "accent": "British",
+      "quality": "Kokoro · grade C",
+      "recommended": false
+    }
+  ]
+}

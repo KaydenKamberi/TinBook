@@ -22,6 +22,8 @@ You are one of three AI agents building **Tinbook** in parallel. The human (Kayd
 | **Replit Agent** | Mid. Has the Replit environment, package installs, secrets, live preview | Scaffolding, env/config, API wiring, networking modules, device display |
 | **Mistral (Vibe)** | Most literal. Best with tight specs and pure functions | Isolated pure-function modules, tests, scripts, docs |
 
+Wave 4 runs **two Claude Code sessions at the same time** (CP4A and CP4B). Treat them as two separate agents: each owns only its own checkpoint's files and branch.
+
 If you are Mistral: follow the spec **exactly**. Do not add features, refactor other files, or "improve" contracts. When unsure, pick the simplest option that satisfies the acceptance criteria and note it in your handoff.
 
 ## 4. Hard rules
