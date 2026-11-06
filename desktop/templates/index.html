@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Tinbook</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="brand">Tinbook</h1>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button type="button" role="tab" id="tab-library" data-view="library" aria-controls="view-library" aria-selected="true">Library</button>
+      <button type="button" role="tab" id="tab-search" data-view="search" aria-controls="view-search" aria-selected="false" tabindex="-1">Search</button>
+      <button type="button" role="tab" id="tab-player" data-view="player" aria-controls="view-player" aria-selected="false" tabindex="-1">Player</button>
+    </nav>
+  </header>
+
+  <div id="banner" class="banner" role="alert" hidden></div>
+
+  <main>
+    <!-- Library -->
+    <section id="view-library" class="view" role="tabpanel" aria-labelledby="tab-library">
+      <p id="library-loading" class="muted center">Loading your library…</p>
+      <ul id="book-list" class="book-list"></ul>
+      <div id="library-empty" class="empty" hidden>
+        <p>Your library is empty.</p>
+        <button type="button" class="btn primary" data-goto="search">Find a book</button>
+      </div>
+    </section>
+
+    <!-- Search -->
+    <section id="view-search" class="view" role="tabpanel" aria-labelledby="tab-search" hidden>
+      <form id="search-form" class="search-form" role="search">
+        <input id="search-input" type="search" placeholder="Title or author" aria-label="Search Project Gutenberg" autocomplete="off" spellcheck="false">
+        <button type="submit" class="btn primary">Search</button>
+      </form>
+      <p id="search-status" class="muted" aria-live="polite"></p>
+      <ul id="search-results" class="result-list"></ul>
+      <button type="button" id="search-more" class="btn ghost wide" hidden>More results</button>
+    </section>
+
+    <!-- Player -->
+    <section id="view-player" class="view" role="tabpanel" aria-labelledby="tab-player" hidden>
+      <div id="player-empty" class="empty">
+        <p>Nothing playing yet.</p>
+        <button type="button" class="btn primary" data-goto="library">Open library</button>
+      </div>
+
+      <div id="player" class="player" hidden>
+        <div class="now">
+          <h2 id="p-book-title" class="p-book"></h2>
+          <p id="p-book-author" class="muted"></p>
+          <p class="p-chapter"><span id="p-chapter-num" class="muted"></span><span id="p-chapter-title"></span></p>
+        </div>
+
+        <p id="p-message" class="p-message" aria-live="polite" hidden></p>
+
+        <div class="seek">
+          <input id="p-seek" type="range" min="0" max="0" step="1" value="0" aria-label="Position in chapter">
+          <div class="times"><span id="p-elapsed">0:00</span><span id="p-remaining">−0:00</span></div>
+        </div>
+
+        <div class="controls">
+          <button type="button" id="p-prev" class="ctl" aria-label="Previous chapter" title="Previous chapter">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg>
+          </button>
+          <button type="button" id="p-back" class="ctl" aria-label="Back 30 seconds" title="Back 30 seconds">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
+            <span class="ctl-num">30</span>
+          </button>
+          <button type="button" id="p-play" class="ctl play" aria-label="Play" title="Play">
+            <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+          </button>
+          <button type="button" id="p-fwd" class="ctl" aria-label="Forward 30 seconds" title="Forward 30 seconds">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/></svg>
+            <span class="ctl-num">30</span>
+          </button>
+          <button type="button" id="p-next" class="ctl" aria-label="Next chapter" title="Next chapter">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z"/></svg>
+          </button>
+        </div>
+
+        <div class="speed-row">
+          <label for="p-speed">Speed</label>
+          <select id="p-speed"></select>
+        </div>
+
+        <details id="p-chapters" class="chapters">
+          <summary>Chapters <span id="p-chapter-count" class="muted"></span></summary>
+          <ol id="p-chapter-list" class="chapter-list"></ol>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <!-- Compact now-playing bar, shown on Library/Search while a book is open -->
+  <div id="mini" class="mini" hidden>
+    <button type="button" id="mini-open" class="mini-info" aria-label="Open player">
+      <span id="mini-chapter" class="mini-chapter"></span>
+      <span id="mini-book" class="mini-book muted"></span>
+    </button>
+    <button type="button" id="mini-play" class="ctl small" aria-label="Play" title="Play">
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
+  </div>
+
+  <audio id="audio" preload="metadata"></audio>
+  <script src="/static/app.js"></script>
+</body>
+</html>
