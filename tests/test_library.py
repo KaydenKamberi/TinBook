@@ -32,6 +32,14 @@ def isolated_config(monkeypatch, tmp_path: Path):
 
 
 @pytest.fixture(autouse=True)
+def reset_gutenberg_state(monkeypatch):
+    """Gutenberg keeps outage and catalog state in module globals; reset per test."""
+    monkeypatch.setattr(gutenberg, "_gutendex_skip_until", 0.0)
+    monkeypatch.setattr(gutenberg, "_catalog_retry_at", 0.0)
+    monkeypatch.setattr(gutenberg, "_catalog_cache", None)
+
+
+@pytest.fixture(autouse=True)
 def http():
     with responses.RequestsMock() as mock:
         yield mock
@@ -530,7 +538,7 @@ def test_get_metadata_still_raises_for_malformed_single_book(http) -> None:
         gutenberg.get_metadata(2554)
 
 
-def test_http_timeout_uses_configuration(monkeypatch) -> None:
+def test_gutendex_timeout_is_capped_at_8_seconds(monkeypatch) -> None:
     captured = {}
 
     def fake_get(url, **kwargs):
@@ -542,7 +550,7 @@ def test_http_timeout_uses_configuration(monkeypatch) -> None:
 
     monkeypatch.setattr(gutenberg.requests, "get", fake_get)
     assert gutenberg.search("book") == []
-    assert captured["timeout"] == get_config().http_timeout
+    assert captured["timeout"] == min(8, get_config().http_timeout)
 
 
 @pytest.mark.parametrize("page", [0, -1, True])
