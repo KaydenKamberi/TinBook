@@ -187,3 +187,28 @@ class TestSaveDoesNotMutate:
         assert newer(a, b) is a
         c = Progress(updated_at="2024-01-02T00:00:00Z")
         assert newer(a, c) is c
+
+
+class TestSaveUsesLibraryWriter:
+    """CP3: progress.py writes through core.library.write_json_atomic."""
+
+    def test_save_goes_through_library_write_json_atomic(self, tmp_path, monkeypatch):
+        from core import progress as progress_module
+
+        calls = []
+        monkeypatch.setattr(progress_module, "write_json_atomic", lambda path, data: calls.append((path, data)))
+        saved = save_progress(tmp_path, Progress(chapter_index=2, position_sec=5.0))
+        assert calls == [(tmp_path / "progress.json", saved.to_dict())]
+
+    def test_save_leaves_no_tmp_file(self, tmp_path):
+        save_progress(tmp_path, Progress(chapter_index=1))
+        assert sorted(p.name for p in tmp_path.iterdir()) == ["progress.json"]
+        assert json.loads((tmp_path / "progress.json").read_text(encoding="utf-8"))["chapter_index"] == 1
+
+    def test_save_never_recreates_a_deleted_book_folder(self, tmp_path):
+        from core.library import LibraryError
+
+        missing = tmp_path / "deleted-book"
+        with pytest.raises(LibraryError, match="does not exist"):
+            save_progress(missing, Progress())
+        assert not missing.exists()

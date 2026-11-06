@@ -387,6 +387,42 @@ def test_worker_survives_unexpected_errors(lib, synth, monkeypatch) -> None:
         queue.stop()
 
 
+def test_unsupported_audio_format_marks_book_error_without_synthesis(lib, synth) -> None:
+    """CP3: a bad audio_format used to leave the book stuck in queued forever."""
+    lib.add("1-a", chapters=2, audio_format="wav")
+    jobs.JobQueue()._process_book("1-a")
+    book = lib.stored("1-a")
+    assert book.status == "error"
+    assert book.error == "Unsupported audio format 'wav' (use opus or mp3). Regenerate the book to fix it."
+    assert [c.status for c in book.chapters] == ["pending", "pending"]
+    assert synth.calls == []
+
+
+def test_unexpected_worker_error_marks_book_error(lib, synth, monkeypatch) -> None:
+    """CP3: any unexpected exception ends with status error, not a book stuck generating."""
+    lib.add("1-a", chapters=2)
+    lib.add("2-b", chapters=1, added_at="2026-01-02T00:00:00Z")
+
+    def broken_audio_path(book_id: str, index: int, audio_format: str) -> Path:
+        if book_id == "1-a":
+            raise OSError("disk unplugged")
+        return lib.book_dir(book_id) / "audio" / f"{index:03d}.{audio_format}"
+
+    monkeypatch.setattr(jobs.library, "chapter_audio_path", broken_audio_path)
+    queue = jobs.JobQueue()
+    queue.start()
+    try:
+        wait_for(lambda: lib.stored("2-b").status == "ready")
+        wait_for(lambda: lib.stored("1-a").status == "error")
+    finally:
+        queue.stop()
+    assert lib.stored("1-a").error == "Generation stopped unexpectedly: disk unplugged"
+
+
+def test_mark_book_error_never_raises_for_a_deleted_book(lib) -> None:
+    jobs._mark_book_error("gone", "whatever")  # no exception
+
+
 def test_get_queue_is_a_singleton() -> None:
     assert jobs.get_queue() is jobs.get_queue()
     assert isinstance(jobs.get_queue(), jobs.JobQueue)

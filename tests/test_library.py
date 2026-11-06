@@ -109,6 +109,19 @@ def test_list_books_sorted_and_skips_unreadable(metadata, caplog) -> None:
     assert caplog.text.count("Skipping unreadable book folder") == 4
 
 
+def test_list_books_quietly_ignores_dot_folders_and_files(metadata, caplog) -> None:
+    """CP3: hidden folders (.cache/, staging .x.tmp) and files like pg_catalog.csv are not books."""
+    book = library.create_book(metadata, "raw", [("One", "text")], "voice", "opus")
+    root = get_config().library_dir
+    (root / ".cache").mkdir()
+    (root / ".cache" / "84.txt").write_text("cached download", encoding="utf-8")
+    (root / ".leftover-staging").mkdir()
+    (root / "pg_catalog.csv").write_text("Text#\n", encoding="utf-8")
+    with caplog.at_level("WARNING"):
+        assert [b.id for b in library.list_books()] == [book.id]
+    assert "Skipping" not in caplog.text
+
+
 def test_list_books_skips_deeply_nested_json(metadata, caplog) -> None:
     book = create_sample(metadata)
     broken = get_config().library_dir / "deeply-nested"

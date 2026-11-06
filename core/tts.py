@@ -154,12 +154,16 @@ def _probe_ffmpeg() -> tuple[str | None, frozenset[str]]:
 
 
 def check_environment() -> dict:
-    """Report engine availability: ``{"piper", "ffmpeg", "opus", "voices"}``."""
+    """Report engine availability: ``{"piper", "ffmpeg", "opus", "mp3", "voices"}``.
+
+    ``mp3`` says whether the found ffmpeg can encode the mp3 fallback (libmp3lame).
+    """
     ffmpeg, formats = _detect_ffmpeg()
     return {
         "piper": _piper_voice_class() is not None or _piper_executable() is not None,
         "ffmpeg": ffmpeg,
         "opus": "opus" in formats,
+        "mp3": "mp3" in formats,
         "voices": list_voices(),
     }
 

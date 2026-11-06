@@ -157,6 +157,26 @@ def test_duplicate_book_is_409_and_original_is_preserved(client, book):
     assert library.get_book(book.id) == book
 
 
+def test_simultaneous_duplicate_add_is_409_not_500(client, book, monkeypatch):
+    """CP3: the add that loses a create race gets 409, like any other duplicate."""
+    real_book_dir = library.book_dir
+    hidden = {"yes": True}
+
+    def book_dir_hiding_existing(book_id):
+        # The pre-check runs before the other add finished: pretend the folder is absent.
+        path = real_book_dir(book_id)
+        if hidden["yes"]:
+            hidden["yes"] = False
+            return path.parent / f"not-yet-{book_id}"
+        return path
+
+    monkeypatch.setattr(pipeline.library, "book_dir", book_dir_hiding_existing)
+    response = client.post("/api/books", json={"gutenberg_id": 84})
+    assert response.status_code == 409
+    assert "already exists" in response.json["error"]
+    assert library.get_book(book.id) == book
+
+
 @pytest.mark.parametrize("voice", ["not-installed", "", False, []])
 def test_invalid_voice_does_not_download_or_create_book(client, voice, sandbox):
     response = client.post("/api/books", json={"gutenberg_id": 84, "voice": voice})
@@ -277,6 +297,17 @@ def test_regeneration_resets_audio_metadata_and_preserves_progress(client, book,
     sandbox.queue.enqueue.assert_called_once_with(book.id)
 
 
+def test_regeneration_switches_book_to_configured_audio_format(client, book):
+    """CP3: regenerate re-encodes in the configured audio_format (here mp3 -> opus)."""
+    book.audio_format = "mp3"
+    book.status = "error"
+    library.save_book(book)
+    response = client.post(f"/api/books/{book.id}/regenerate", json={"voice": "en_US-lessac-medium"})
+    assert response.status_code == 200
+    assert response.json["audio_format"] == get_config().audio_format == "opus"
+    assert response.json["status"] == "queued"
+
+
 def test_invalid_regeneration_keeps_audio(client, book):
     path = library.chapter_audio_path(book.id, 0, book.audio_format)
     path.write_bytes(b"keep")
@@ -374,7 +405,10 @@ def test_desktop_launcher_dimensions_binding_and_shutdown(monkeypatch, app, sand
     thread = Mock()
     make_thread = Mock(return_value=thread)
     monkeypatch.setattr(launcher.threading, "Thread", make_thread)
-    webview = SimpleNamespace(create_window=Mock(), start=Mock())
+    window = Mock()
+    close_hook = Mock()
+    monkeypatch.setattr(launcher, "save_progress_on_close", close_hook)
+    webview = SimpleNamespace(create_window=Mock(return_value=window), start=Mock())
     if webview_fails:
         webview.start.side_effect = RuntimeError("Window closed unexpectedly")
     monkeypatch.setitem(sys.modules, "webview", webview)
@@ -389,6 +423,62 @@ def test_desktop_launcher_dimensions_binding_and_shutdown(monkeypatch, app, sand
         "Tinbook", "http://127.0.0.1:54321", width=420, height=720, min_size=(360, 560),
     )
     thread.start.assert_called_once_with()
+    close_hook.assert_called_once_with(window)  # close hook installed (CP3)
     server.shutdown.assert_called_once_with()
     server.server_close.assert_called_once_with()
     sandbox.queue.stop.assert_called_once_with()
+
+
+class FakeEvent:
+    """Minimal pywebview Event: ``+=`` adds a handler; ``fire`` returns False if any handler did."""
+
+    def __init__(self):
+        self.handlers = []
+
+    def __iadd__(self, handler):
+        self.handlers.append(handler)
+        return self
+
+    def fire(self):
+        return all(handler() is not False for handler in self.handlers)
+
+
+class FakeWindow:
+    def __init__(self, resolve=True, raise_on_eval=False):
+        self.events = SimpleNamespace(closing=FakeEvent())
+        self.resolve = resolve
+        self.raise_on_eval = raise_on_eval
+        self.scripts = []
+        self.destroyed = launcher.threading.Event()
+
+    def evaluate_js(self, script, callback=None):
+        self.scripts.append(script)
+        if self.raise_on_eval:
+            raise RuntimeError("page is gone")
+        if self.resolve:
+            callback(True)
+
+    def destroy(self):
+        self.destroyed.set()
+
+
+@pytest.mark.parametrize("window_kwargs", [{}, {"resolve": False}, {"raise_on_eval": True}])
+def test_close_saves_progress_then_destroys_window(window_kwargs):
+    """CP3 / PRD D-8: first close is cancelled, the page saves, then the window closes."""
+    window = FakeWindow(**window_kwargs)
+    launcher.save_progress_on_close(window, timeout=0.2)
+    assert window.events.closing.fire() is False  # first close: cancelled while saving
+    assert window.destroyed.wait(2)
+    assert window.scripts == [launcher._SAVE_JS]
+    assert "window.tinbook.saveProgress()" in launcher._SAVE_JS
+    assert window.events.closing.fire() is True  # the close from destroy() goes through
+
+
+def test_repeated_close_clicks_start_only_one_save():
+    window = FakeWindow(resolve=False)
+    launcher.save_progress_on_close(window, timeout=0.3)
+    assert window.events.closing.fire() is False
+    assert window.events.closing.fire() is False
+    assert window.destroyed.wait(2)
+    assert window.scripts == [launcher._SAVE_JS]
+

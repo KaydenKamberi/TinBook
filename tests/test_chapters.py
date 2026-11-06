@@ -99,9 +99,28 @@ def test_tiny_sections_cascade_until_big_enough():
     text = cleaned_text("Contents", "CHAPTER I", "short", "CHAPTER II", "short", "CHAPTER III", LONG_TEXT,
                         "CHAPTER IV", LONG_TEXT)  # fmt: skip
     result = split_chapters(text)
-    assert titles(result) == ["Opening — Chapter I — Chapter II — Chapter III", "Chapter IV"]
+    # 4 merged headings: only the first and last are kept (CP3 title cap).
+    assert titles(result) == ["Opening — … — Chapter III", "Chapter IV"]
     assert result[0][1] == cleaned_text("Contents", "short", "short", LONG_TEXT)
     assert all(len(body.split()) >= 50 for _, body in result)
+
+
+def test_three_merged_headings_keep_every_part():
+    result = split_chapters(cleaned_text("PART ONE", "CHAPTER I", "short", "CHAPTER II", LONG_TEXT, "CHAPTER III", LONG_TEXT))
+    assert titles(result) == ["Part One — Chapter I — Chapter II", "Chapter III"]
+
+
+def test_table_of_contents_with_paragraph_entries_gives_a_short_title():
+    """CP3: a TOC whose entries are separate paragraphs used to become one 30-part title."""
+    toc = ["Frankenstein;", "CONTENTS"] + [f"Letter {i}" for i in range(1, 5)] + [f"Chapter {i}" for i in range(1, 25)]
+    body = []
+    for i in range(1, 5):
+        body += [f"Letter {i}", LONG_TEXT]
+    for i in range(1, 3):
+        body += [f"Chapter {i}", LONG_TEXT]
+    result = split_chapters(cleaned_text(*toc, *body))
+    assert titles(result) == ["Opening — … — Letter 1", "Letter 2", "Letter 3", "Letter 4", "Chapter 1", "Chapter 2"]
+    assert result[0][1] == cleaned_text("Frankenstein;", "CONTENTS", LONG_TEXT)
 
 
 def test_tiny_last_section_merges_into_previous_and_keeps_its_title():

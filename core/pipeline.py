@@ -29,13 +29,23 @@ def add_book(gutenberg_id: int, voice: str | None = None) -> Book:
         raise BookAlreadyExists(f"Book {identifier} already exists in the library.")
     raw = gutenberg.download_text(gutenberg_id)
     sections = chapters.split_chapters(text_cleaner.clean(raw))
-    book = library.create_book(metadata, raw, sections, selected_voice, config.audio_format)
+    try:
+        book = library.create_book(metadata, raw, sections, selected_voice, config.audio_format)
+    except library.LibraryError:
+        # Two adds of the same book at once: the loser gets a 409, not a 500.
+        if (library.book_dir(identifier) / "book.json").exists():
+            raise BookAlreadyExists(f"Book {identifier} already exists in the library.") from None
+        raise
     jobs.get_queue().enqueue(book.id)
     return book
 
 
 def regenerate_book(book_id: str, voice: str) -> Book:
-    """Reset generated audio while keeping text and playback progress."""
+    """Reset generated audio while keeping text and playback progress.
+
+    The book also switches to the configured ``audio_format`` (e.g. after moving
+    to mp3 because ffmpeg has no libopus, or to repair an unsupported format).
+    """
     book = library.get_book(book_id)
     _validate_voice(voice)
     audio_dir = library.book_dir(book_id) / "audio"
@@ -46,6 +56,7 @@ def regenerate_book(book_id: str, voice: str) -> Book:
     except OSError as error:
         raise library.LibraryError(f"Could not reset audio for {book_id}: {error}") from error
     book.voice = voice
+    book.audio_format = get_config().audio_format
     book.status = "queued"
     book.error = None
     for chapter in book.chapters:

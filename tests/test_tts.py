@@ -114,6 +114,7 @@ def test_check_environment_shape(fakes) -> None:
         "piper": True,
         "ffmpeg": "ffmpeg-bundled",
         "opus": True,
+        "mp3": True,
         "voices": [fakes.voice],
     }
 
@@ -129,6 +130,14 @@ def test_ffmpeg_without_libopus_reports_opus_false(monkeypatch, fakes) -> None:
     env = tts.check_environment()
     assert env["ffmpeg"] == "ffmpeg-bundled"
     assert env["opus"] is False  # native experimental "opus" encoder doesn't count
+    assert env["mp3"] is True  # ...but the mp3 fallback would work
+
+
+def test_check_environment_reports_mp3_false_without_libmp3lame(monkeypatch, fakes) -> None:
+    monkeypatch.setattr(tts, "_encoders", lambda path: " A..... libopus   libopus Opus\n")
+    env = tts.check_environment()
+    assert env["opus"] is True
+    assert env["mp3"] is False
 
 
 def test_ffmpeg_detection_runs_once(monkeypatch, fakes) -> None:

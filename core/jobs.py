@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 
 MAX_ATTEMPTS = 2  # a chapter is tried once, then retried once
 _DEFAULT_BITRATES = {"opus": "32k", "mp3": "48k"}
+SUPPORTED_FORMATS = tuple(_DEFAULT_BITRATES)  # same formats as tts and library.chapter_audio_path
 
 
 def _bitrate_for(audio_format: str) -> str:
@@ -127,8 +128,11 @@ class JobQueue:
                 }
             try:
                 self._process_book(book_id)
-            except Exception:
+            except Exception as error:
+                # Never leave a book stuck in queued/generating: it would be
+                # re-queued on every start and fail the same way.
                 log.exception("Unexpected error generating %s", book_id)
+                _mark_book_error(book_id, f"Generation stopped unexpectedly: {error}")
             finally:
                 with self._cond:
                     self._current = None
@@ -150,6 +154,14 @@ class JobQueue:
                 book = library.get_book(book_id)
             except LibraryError as error:
                 log.warning("Skipping %s: %s", book_id, error)
+                return
+
+            if book.audio_format not in SUPPORTED_FORMATS:
+                _mark_book_error(
+                    book_id,
+                    f"Unsupported audio format '{book.audio_format}' "
+                    f"(use {' or '.join(SUPPORTED_FORMATS)}). Regenerate the book to fix it.",
+                )
                 return
 
             index = _next_chapter(book)
@@ -219,6 +231,17 @@ class JobQueue:
         book.error = f"Chapter {index + 1} ({title}) failed twice: {error}"
         library.save_book(book)
         log.error("%s: %s", book_id, book.error)
+
+
+def _mark_book_error(book_id: str, message: str) -> None:
+    """Set a book's status to ``error`` with ``message``; never raises."""
+    try:
+        book = library.get_book(book_id)
+        book.status, book.error = "error", message
+        library.save_book(book)
+        log.error("%s: %s", book_id, message)
+    except Exception as error:  # deleted meanwhile, or the disk is failing
+        log.warning("Could not mark %s as failed: %s", book_id, error)
 
 
 _queue: JobQueue | None = None

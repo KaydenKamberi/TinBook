@@ -270,6 +270,18 @@ def test_search_error_when_gutendex_and_catalog_both_fail(http, failure, message
     assert not catalog_path().exists()
 
 
+def test_offline_error_message_does_not_repeat_itself(http) -> None:
+    """CP3: when both requests fail identically, say it once."""
+    gutendex_down(http, error=requests.ConnectionError("offline"))
+    http.get(CATALOG, body=requests.ConnectionError("offline"))
+    with pytest.raises(gutenberg.GutenbergError) as error:
+        gutenberg.search("crime")
+    assert str(error.value) == (
+        "Could not reach Gutenberg. Check your connection and try again. "
+        "(The backup catalog also failed the same way.)"
+    )
+
+
 # --- get_metadata -------------------------------------------------------------
 
 

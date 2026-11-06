@@ -120,9 +120,9 @@ def list_books() -> list[Book]:
     books = []
     for directory in directories:
         try:
-            if not directory.is_dir() or (
-                directory.name.startswith(".") and directory.name.endswith(".tmp")
-            ):
+            # Dot-folders are never books: staging folders (".<id>-*.tmp") and
+            # hidden caches such as ".cache/" (ARCHITECTURE §4).
+            if not directory.is_dir() or directory.name.startswith("."):
                 continue
             books.append(get_book(directory.name))
         except Exception as error:

@@ -4,22 +4,14 @@ import dataclasses
 import json
 import logging
 import math
-import os
 from pathlib import Path
 
+from .library import LibraryError, write_json_atomic
 from .models import Progress, now_iso
 
 log = logging.getLogger(__name__)
 
 PROGRESS_FILE = "progress.json"
-
-
-def _write_json_atomic(path: Path, data: dict) -> None:
-    """Write ``path.tmp`` then ``os.replace``; UTF-8, indent=2 (same as core.library)."""
-    tmp_path = path.with_name(path.name + ".tmp")
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp_path, path)
 
 
 def _is_number(value: object) -> bool:
@@ -61,9 +53,16 @@ def load_progress(book_dir: Path) -> Progress:
 
 
 def save_progress(book_dir: Path, progress: Progress) -> Progress:
-    """Save a copy of ``progress`` with updated_at=now_iso() atomically; return that copy."""
+    """Save a copy of ``progress`` with updated_at=now_iso() atomically; return that copy.
+
+    Raises ``library.LibraryError`` if the book folder is missing (e.g. the book was
+    just deleted; never recreate it) or the file can't be written.
+    """
+    book_dir = Path(book_dir)
+    if not book_dir.is_dir():
+        raise LibraryError(f"Book folder {book_dir.name} does not exist.")
     saved = dataclasses.replace(progress, updated_at=now_iso())
-    _write_json_atomic(Path(book_dir) / PROGRESS_FILE, saved.to_dict())
+    write_json_atomic(book_dir / PROGRESS_FILE, saved.to_dict())
     return saved
 
 

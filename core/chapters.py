@@ -6,6 +6,7 @@ Rules are specified in docs/CHECKPOINTS.md, CP1C.
 import re
 
 MAX_HEADING_CHARS = 80
+MAX_TITLE_PARTS = 3  # longer merged titles keep first and last only
 TINY_WORDS = 50  # sections with fewer body words are merged
 OVERSIZE_WORDS = 15_000  # sections with more body words are split
 PART_WORDS = 5_000  # a part ends at the first paragraph boundary at/after this many words
@@ -76,28 +77,41 @@ def _sections(paragraphs: list[str]) -> list[tuple[str, list[str]]]:
     return sections
 
 
+def _merged_title(parts: list[str]) -> str:
+    """Join merged headings; a long run keeps only its first and last ("A — … — Z").
+
+    A table of contents whose entries are separate paragraphs is a run of tiny
+    heading-only sections, and joining every entry would give a title like
+    "Opening — Letter 1 — … (30 more) … — Letter 1".
+    """
+    if len(parts) > MAX_TITLE_PARTS:
+        parts = [parts[0], "…", parts[-1]]
+    return " — ".join(parts)
+
+
 def _merge_tiny(sections: list[tuple[str, list[str]]]) -> list[tuple[str, list[str]]]:
     """Rule 3: a section under 50 words merges into the next one, cascading.
 
-    The merged title is "<tiny> — <next>". A tiny last section merges into the
-    previous one, which keeps its title.
+    The merged title is "<tiny> — <next>" (at most 3 parts, see ``_merged_title``).
+    A tiny last section merges into the previous one, which keeps its title.
     """
     merged: list[tuple[str, list[str]]] = []
-    carry: tuple[str, list[str]] | None = None
+    carry: tuple[list[str], list[str]] | None = None  # (title parts, body)
     for title, body in sections:
+        parts = [title]
         if carry is not None:
-            title, body = f"{carry[0]} — {title}", carry[1] + body
+            parts, body = carry[0] + parts, carry[1] + body
             carry = None
         if _words(body) < TINY_WORDS:
-            carry = (title, body)
+            carry = (parts, body)
         else:
-            merged.append((title, body))
+            merged.append((_merged_title(parts), body))
     if carry is not None:
         if merged:
             previous_title, previous_body = merged[-1]
             merged[-1] = (previous_title, previous_body + carry[1])
         else:
-            merged.append(carry)
+            merged.append((_merged_title(carry[0]), carry[1]))
     return merged
 
 

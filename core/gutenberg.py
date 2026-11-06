@@ -145,7 +145,11 @@ def _with_fallback(primary_error: GutenbergError, action: Callable[[], T]) -> T:
     try:
         return action()
     except GutenbergError as error:
-        raise GutenbergError(f"{primary_error} The backup catalog also failed: {error}") from error
+        if str(error) == str(primary_error):  # e.g. offline: don't repeat the same sentence
+            message = f"{primary_error} (The backup catalog also failed the same way.)"
+        else:
+            message = f"{primary_error} The backup catalog also failed: {error}"
+        raise GutenbergError(message) from error
 
 
 def _download_text(url: str, gutenberg_id: int) -> str:
