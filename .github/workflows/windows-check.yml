@@ -1,0 +1,112 @@
+# Windows check: install → pytest → real Piper smoke test → real Gutenberg books →
+# end-to-end generation of 2 chapters → Playwright browser test of the real UI.
+# Downloads (report, .opus files, screenshots, logs) are uploaded as one artifact.
+name: Windows check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-check:
+    name: Windows check (Python 3.11)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: utf-8
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      VOICE: en_US-lessac-medium
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies (network, retried)
+        timeout-minutes: 12
+        run: python scripts/ci/retry.py --attempts 3 --timeout 420 --delay 20 -- python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run pytest
+        timeout-minutes: 8
+        run: python -m pytest -q -p no:cacheprovider
+
+      - name: Restore Piper voice cache
+        uses: actions/cache@v6
+        with:
+          path: voices
+          key: piper-voice-${{ env.VOICE }}-v1
+
+      - name: Download voice (network, retried)
+        timeout-minutes: 8
+        run: python scripts/ci/retry.py --attempts 3 --timeout 180 --delay 15 -- python scripts/download_voice.py $env:VOICE
+
+      - name: Smoke test (Piper + ffmpeg/Opus)
+        timeout-minutes: 3
+        run: python scripts/smoke_test.py
+
+      - name: Check real books (network, retried; says Gutendex or fallback)
+        timeout-minutes: 10
+        run: python scripts/ci/retry.py --attempts 3 --timeout 180 --delay 30 -- python scripts/ci/check_books.py --out ci-out/check_real_books.txt
+
+      - name: End-to-end generation (Frankenstein, first 2 chapters)
+        timeout-minutes: 12
+        run: python scripts/ci/e2e_generate.py --library "$env:RUNNER_TEMP/e2e-library" --out ci-out/audio
+
+      - name: Restore Playwright browser cache
+        uses: actions/cache@v6
+        with:
+          path: ~\AppData\Local\ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('requirements-dev.txt') }}
+
+      - name: Install Chromium for Playwright (network, retried)
+        timeout-minutes: 6
+        run: python scripts/ci/retry.py --attempts 3 --timeout 150 --delay 15 -- python -m playwright install chromium
+
+      - name: Browser test (search → add → play → auto-advance → resume)
+        timeout-minutes: 14
+        run: python scripts/ci/browser_test.py --library "$env:RUNNER_TEMP/browser-library" --out ci-out
+
+      - name: Write job summary
+        if: always()
+        run: |
+          $report = "ci-out/check_real_books.txt"
+          "## Windows check" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          if (Test-Path $report) {
+            "### Real books (source used)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            '```' | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            Select-String -Path $report -Pattern '^(=== Book|Title:|Chapters:|Source:|Gutendex:|Summary:)' |
+              ForEach-Object { $_.Line } | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            '```' | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          }
+          "Downloads: see **Artifacts** at the bottom of this run's Summary page." | Out-File -Append $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload report, audio, screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tinbook-windows-check
+          path: ci-out/
+          if-no-files-found: warn
+          retention-days: 14
