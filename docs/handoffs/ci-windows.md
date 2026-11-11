@@ -32,5 +32,23 @@ Branch `ci-windows-claude`, from `main` at `50e847d` (CP3 merged). Requested by 
 ## New dependencies needed
 - `playwright` (dev/CI only), in the new `requirements-dev.txt`.
 
-## First run
-- (filled in after the first run on this branch)
+## First run (2026-11-11, commit `d1cd061`)
+Both runs passed: run #1 from the PR and run #2 started by hand on the branch. The whole job took about 3.5 minutes.
+- pytest passed on Windows with Python 3.11.9. The Piper smoke test passed: the voice loaded and was converted to Opus.
+- **Gutendex returns HTTP 403 to GitHub's runners**, so CI always uses the fallback (the catalog plus the direct gutenberg.org URL), and the logs say so. CI therefore never tests the Gutendex path.
+  - 403 isn't treated as an outage, so Gutendex isn't skipped for 60 s and is asked twice per book (metadata, then text). This is harmless and only costs a fraction of a second.
+- End-to-end: real Piper wrote 6.8 min of audio in 35 s (11.7× real time). Chapter 1 = 30.2 s, chapter 2 = 379.8 s; both are Ogg files with durations.
+- The browser test passed:
+  - search → Add → chapter 1 ready after 6 s → Start → playing;
+  - seek → "Waiting for chapter 2…" → it auto-advanced once chapter 2 was ready (25 s);
+  - progress was saved at chapter 2;
+  - reload → Continue → resumed 0.8 s from where it was.
+  - Headless Chromium plays Opus on the runner even though it has no sound card.
+- **Real-books results (CP3 task 2), with splitting issues for CP3 to fix:**
+
+  | Book | Chapters | Words/chapter | First titles | Issue |
+  |---|---|---|---|---|
+  | Frankenstein (84) | 29 | 67 – 8,237 | Opening (67 words), Letter 1–4 | "Opening" is the title page plus contents. It is just over the 50-word merge limit, so it becomes a 30-second chapter 1. |
+  | Crime and Punishment (2554) | 42 | 822 – 7,537 | "Opening — … — Part VI" (822), "Part I — Chapter I" | Chapter 1 is the table of contents read out loud. The last title is a bare `II` (the Epilogue heading isn't recognised). |
+  | Pride and Prejudice (1342) | 62 | 676 – 5,202 | Opening (4,967), "Chapter I.]" | The 4,967-word "Opening" is the preface plus a list of illustrations. The `]` in `Chapter I.]` is left over from an illustration caption. |
+- Node 20 deprecation warning on the actions: bumped to `checkout@v7`, `setup-python@v7`, `cache@v6`, `upload-artifact@v7` in the follow-up commit.

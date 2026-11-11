@@ -33,10 +33,10 @@ jobs:
       VOICE: en_US-lessac-medium
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -53,7 +53,7 @@ jobs:
         run: python -m pytest -q -p no:cacheprovider
 
       - name: Restore Piper voice cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: voices
           key: piper-voice-${{ env.VOICE }}-v1
@@ -75,7 +75,7 @@ jobs:
         run: python scripts/ci/e2e_generate.py --library "$env:RUNNER_TEMP/e2e-library" --out ci-out/audio
 
       - name: Restore Playwright browser cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~\AppData\Local\ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('requirements-dev.txt') }}
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload report, audio, screenshots and logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tinbook-windows-check
           path: ci-out/
