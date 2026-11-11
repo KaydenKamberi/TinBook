@@ -49,3 +49,10 @@ python scripts/download_voice.py en_US-lessac-medium
 python -m desktop.app
 ```
 Replit / headless: `python -m desktop.app --browser` (serves on 0.0.0.0:5000 for the preview tab).
+
+## CI
+`.github/workflows/windows-check.yml` ("Windows check") runs on a GitHub Windows runner with Python 3.11 on every pull request to `main`, every push to `main`, and on demand. It runs `pytest`, the Piper smoke test, the real-books check, a real 2-chapter generation of *Frankenstein*, and a Playwright browser test of the UI (search → add → play → auto-advance → reload → resume).
+
+- **Run it manually:** GitHub → **Actions** → **Windows check** → **Run workflow** → pick the branch → **Run workflow**.
+- **Downloads:** open the run → **Summary** → **Artifacts** → `tinbook-windows-check` (zip): `check_real_books.txt` (says whether Gutendex or the fallback was used), `audio/*.opus` (the 2 generated chapters), `screenshots/*.png`, `server.log` and `browser-console.log`. Kept for 14 days. The run's Summary page also shows the real-books results.
+- To run the browser test locally: `pip install -r requirements-dev.txt`, `python -m playwright install chromium`, then `python scripts/ci/browser_test.py --library %TEMP%\tinbook-ci-library --out %TEMP%\tinbook-ci-out` (it uses port 5000, so close any running `--browser` server first).
