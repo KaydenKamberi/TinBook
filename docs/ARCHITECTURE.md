@@ -181,7 +181,9 @@ See CP1C in CHECKPOINTS.md for exact rules.
 
 ### `core/chapters.py` (CP1C)
 ```python
-def split_chapters(text: str) -> list[tuple[str, str]]   # [(title, chapter_text), ...], never empty
+def split_chapters(text: str, authors: list[str] | None = None) -> list[tuple[str, str]]   # [(title, chapter_text), ...], never empty
+    # CP3: drops front matter (title pages, contents, lists of illustrations) and prefaces that are not
+    # the author's own; `authors` (SearchResult.authors) decides whose a signed/credited preface is.
 ```
 See CP1C for exact rules. Deterministic: the same text always gives the same chapters (§10.2 relies on it).
 
@@ -238,7 +240,7 @@ Worker: for each chapter where status is not "done"/"skipped" or the audio file 
 class BookAlreadyExists(LibraryError): ...     # same book added twice (also the loser of a simultaneous add) -> HTTP 409
 def add_book(gutenberg_id: int, voice: str | None = None, start_chapter: int = 0) -> Book
     # voice None -> config.default_voice. Raises TTSError if the voice ID is invalid or not installed (before any download).
-    # Stores the canonical voice ID. (cached text or) download_text → clean → split_chapters → create_book → §10.3 → enqueue
+    # Stores the canonical voice ID. (cached text or) download_text → clean → split_chapters(text, metadata.authors) → create_book → §10.3 → enqueue
 def regenerate_book(book_id: str, voice: str) -> Book
     # delete audio/, chapters "done"/"error"/"pending" -> "pending" ("skipped" stay skipped), durations None,
     # set voice (canonical) and audio_format = config.audio_format, status "queued", error None, save, enqueue. Keeps progress.
@@ -416,9 +418,9 @@ def update_local_settings(changes: dict) -> dict  # merge into config.local.json
 ### 10.2 Preview before adding (`pipeline.preview_book`, CP4B)
 ```json
 {"gutenberg_id": 84, "title": "Frankenstein; Or, The Modern Prometheus", "authors": ["Shelley, Mary Wollstonecraft"],
- "chapters": [{"index": 0, "title": "Opening — … — Letter 1", "word_count": 1450}, {"index": 1, "title": "Letter 2", "word_count": 920}]}
+ "chapters": [{"index": 0, "title": "Letter 1", "word_count": 1198}, {"index": 1, "title": "Letter 2", "word_count": 1309}]}
 ```
-- `get_metadata` + `download_text`, then `clean` + `split_chapters`. Raises `GutenbergError` / `ValueError` like `add_book`.
+- `get_metadata` + `download_text`, then `clean` + `split_chapters(text, metadata.authors)` (same chapters as `add_book`). Raises `GutenbergError` / `ValueError` like `add_book`.
 - The raw text is cached at `<library_dir>/.cache/<gutenberg_id>.txt` (write `.tmp`, then `os.replace`). `add_book` uses a cache file younger than 24 h instead of downloading again (so the chapter indexes match what the user saw), and deletes it after the book is created. Both functions delete cache files older than 24 h.
 
 ### 10.3 Adding with a start chapter (`pipeline.add_book`, CP4B)

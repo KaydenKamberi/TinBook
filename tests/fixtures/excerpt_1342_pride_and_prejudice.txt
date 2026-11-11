@@ -1,0 +1,308 @@
+Short excerpts of Project Gutenberg eBook #1342 (public domain), copied verbatim with the
+Gutenberg line breaks and markers; passages in between were left out. Used by tests/test_real_excerpts.py.
+Kept: title pages and dedication, the start and end of Saintsbury's preface, parts of the list of illustrations, the start and end of Chapter I, the start of Chapter II, and the last paragraph.
+
+*** START OF THE PROJECT GUTENBERG EBOOK PRIDE AND PREJUDICE ***
+
+
+
+
+                            [Illustration:
+
+                             GEORGE ALLEN
+                               PUBLISHER
+
+                        156 CHARING CROSS ROAD
+                                LONDON
+
+                             RUSKIN HOUSE
+                                   ]
+
+                            [Illustration:
+
+               _Reading Jane’s Letters._      _Chap 34._
+                                   ]
+
+
+
+
+                                PRIDE.
+                                  and
+                               PREJUDICE
+
+                                  by
+                             Jane Austen,
+
+                           with a Preface by
+                           George Saintsbury
+                                  and
+                           Illustrations by
+                             Hugh Thomson
+
+                         [Illustration: 1894]
+
+                       Ruskin       156. Charing
+                       House.        Cross Road.
+
+                                London
+                             George Allen.
+
+
+
+
+             CHISWICK PRESS:--CHARLES WHITTINGHAM AND CO.
+                  TOOKS COURT, CHANCERY LANE, LONDON.
+
+
+
+
+                            [Illustration:
+
+                          _To J. Comyns Carr
+                      in acknowledgment of all I
+                       owe to his friendship and
+                    advice, these illustrations are
+                         gratefully inscribed_
+
+                            _Hugh Thomson_
+                                   ]
+
+
+
+
+PREFACE.
+
+[Illustration]
+
+
+_Walt Whitman has somewhere a fine and just distinction between “loving
+by allowance” and “loving with personal love.” This distinction applies
+to books as well as to men and women; and in the case of the not very
+numerous authors who are the objects of the personal affection, it
+brings a curious consequence with it. There is much more difference as
+to their best work than in the case of those others who are loved “by
+allowance” by convention, and because it is felt to be the right and
+proper thing to love them. And in the sect--fairly large and yet
+unusually choice--of Austenians or Janites, there would probably be
+found partisans of the claim to primacy of almost every one of the
+novels. To some the delightful freshness and humour of_ Northanger
+Abbey, _its completeness, finish, and_ entrain, _obscure the undoubted
+critical facts that its scale is small, and its scheme, after all, that
+of burlesque or parody, a kind in which the first rank is reached with
+difficulty._ Persuasion, _relatively faint in tone, and not enthralling
+in interest, has devotees who exalt above all the others its exquisite
+delicacy and keeping. The catastrophe of_ Mansfield Park _is admittedly
+theatrical, the hero and heroine are insipid, and the author has almost
+wickedly destroyed all romantic interest by expressly admitting that
+Edmund only took Fanny because Mary shocked him, and that Fanny might
+very likely have taken Crawford if he had been a little more assiduous;
+yet the matchless rehearsal-scenes and the characters of Mrs. Norris and
+others have secured, I believe, a considerable party for it._ Sense and
+Sensibility _has perhaps the fewest out-and-out admirers; but it does
+not want them._
+
+
+_And, after all, what is the good of seeking for the reason of
+charm?--it is there. There were better sense in the sad mechanic
+exercise of determining the reason of its absence where it is not. In
+the novels of the last hundred years there are vast numbers of young
+ladies with whom it might be a pleasure to fall in love; there are at
+least five with whom, as it seems to me, no man of taste and spirit can
+help doing so. Their names are, in chronological order, Elizabeth
+Bennet, Diana Vernon, Argemone Lavington, Beatrix Esmond, and Barbara
+Grant. I should have been most in love with Beatrix and Argemone; I
+should, I think, for mere occasional companionship, have preferred Diana
+and Barbara. But to live with and to marry, I do not know that any one
+of the four can come into competition with Elizabeth._
+
+_GEORGE SAINTSBURY._
+
+
+
+
+[Illustration: List of Illustrations.]
+
+
+                                                                    PAGE
+
+Frontispiece                                                          iv
+
+Title-page                                                             v
+
+Dedication                                                           vii
+
+Heading to Preface                                                    ix
+
+Heading to List of Illustrations                                     xxv
+
+
+“After a short survey”                                               434
+
+“But now it comes out”                                               442
+
+“The efforts of his aunt”                                            448
+
+“Unable to utter a syllable”                                         457
+
+“The obsequious civility”                                            466
+
+Heading to Chapter LXI.                                              472
+
+The End                                                              476
+
+
+
+
+[Illustration: ·PRIDE AND PREJUDICE·
+
+
+
+
+Chapter I.]
+
+
+It is a truth universally acknowledged, that a single man in possession
+of a good fortune must be in want of a wife.
+
+However little known the feelings or views of such a man may be on his
+first entering a neighbourhood, this truth is so well fixed in the minds
+of the surrounding families, that he is considered as the rightful
+property of some one or other of their daughters.
+
+“My dear Mr. Bennet,” said his lady to him one day, “have you heard that
+Netherfield Park is let at last?”
+
+Mr. Bennet replied that he had not.
+
+“But it is,” returned she; “for Mrs. Long has just been here, and she
+told me all about it.”
+
+Mr. Bennet made no answer.
+
+“Do not you want to know who has taken it?” cried his wife, impatiently.
+
+“_You_ want to tell me, and I have no objection to hearing it.”
+
+[Illustration:
+
+“He came down to see the place”
+
+[_Copyright 1894 by George Allen._]]
+
+This was invitation enough.
+
+“Why, my dear, you must know, Mrs. Long says that Netherfield is taken
+by a young man of large fortune from the north of England; that he came
+down on Monday in a chaise and four to see the place, and was so much
+delighted with it that he agreed with Mr. Morris immediately; that he is
+to take possession before Michaelmas, and some of his servants are to be
+in the house by the end of next week.”
+
+“What is his name?”
+
+“Bingley.”
+
+“Is he married or single?”
+
+“Oh, single, my dear, to be sure! A single man of large fortune; four or
+five thousand a year. What a fine thing for our girls!”
+
+“How so? how can it affect them?”
+
+“My dear Mr. Bennet,” replied his wife, “how can you be so tiresome? You
+must know that I am thinking of his marrying one of them.”
+
+“Is that his design in settling here?”
+
+“Design? Nonsense, how can you talk so! But it is very likely that he
+_may_ fall in love with one of them, and therefore you must visit him as
+soon as he comes.”
+
+
+Mr. Bennet was so odd a mixture of quick parts, sarcastic humour,
+reserve, and caprice, that the experience of three-and-twenty years had
+been insufficient to make his wife understand his character. _Her_ mind
+was less difficult to develope. She was a woman of mean understanding,
+little information, and uncertain temper. When she was discontented, she
+fancied herself nervous. The business of her life was to get her
+daughters married: its solace was visiting and news.
+
+[Illustration: M^{r.} & M^{rs.} Bennet
+
+[_Copyright 1894 by George Allen._]]
+
+
+
+
+[Illustration:
+
+“I hope Mr. Bingley will like it”
+
+[_Copyright 1894 by George Allen._]]
+
+
+
+
+CHAPTER II.
+
+
+[Illustration]
+
+Mr. Bennet was among the earliest of those who waited on Mr. Bingley. He
+had always intended to visit him, though to the last always assuring his
+wife that he should not go; and till the evening after the visit was
+paid she had no knowledge of it. It was then disclosed in the following
+manner. Observing his second daughter employed in trimming a hat, he
+suddenly addressed her with,--
+
+“I hope Mr. Bingley will like it, Lizzy.”
+
+“We are not in a way to know _what_ Mr. Bingley likes,” said her mother,
+resentfully, “since we are not to visit.”
+
+“But you forget, mamma,” said Elizabeth, “that we shall meet him at the
+assemblies, and that Mrs. Long has promised to introduce him.”
+
+“I do not believe Mrs. Long will do any such thing. She has two nieces
+of her own. She is a selfish, hypocritical woman, and I have no opinion
+of her.”
+
+“No more have I,” said Mr. Bennet; “and I am glad to find that you do
+not depend on her serving you.”
+
+Mrs. Bennet deigned not to make any reply; but, unable to contain
+herself, began scolding one of her daughters.
+
+“Don’t keep coughing so, Kitty, for heaven’s sake! Have a little
+compassion on my nerves. You tear them to pieces.”
+
+“Kitty has no discretion in her coughs,” said her father; “she times
+them ill.”
+
+“I do not cough for my own amusement,” replied Kitty, fretfully. “When
+is your next ball to be, Lizzy?”
+
+“To-morrow fortnight.”
+
+
+With the Gardiners they were always on the most intimate terms. Darcy,
+as well as Elizabeth, really loved them; and they were both ever
+sensible of the warmest gratitude towards the persons who, by bringing
+her into Derbyshire, had been the means of uniting them.
+
+                            [Illustration:
+
+                                  THE
+                                  END
+                                   ]
+
+
+
+
+             CHISWICK PRESS:--CHARLES WHITTINGHAM AND CO.
+                  TOOKS COURT, CHANCERY LANE, LONDON.
+
+
+
+
+*** END OF THE PROJECT GUTENBERG EBOOK PRIDE AND PREJUDICE ***

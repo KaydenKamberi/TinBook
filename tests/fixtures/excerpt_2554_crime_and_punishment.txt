@@ -1,0 +1,305 @@
+Short excerpts of Project Gutenberg eBook #2554 (public domain), copied verbatim with the
+Gutenberg line breaks and markers; passages in between were left out. Used by tests/test_real_excerpts.py.
+Kept: title page, contents, the start and end of the Translator's Preface, Part I chapters I-II, the end of Part VI and the Epilogue (I and II).
+
+*** START OF THE PROJECT GUTENBERG EBOOK CRIME AND PUNISHMENT ***
+
+
+
+
+CRIME AND PUNISHMENT
+
+By Fyodor Dostoevsky
+
+
+Translated By Constance Garnett
+
+
+
+
+CONTENTS
+
+    TRANSLATOR’S PREFACE
+
+  CRIME AND PUNISHMENT
+
+    PART I
+
+    CHAPTER I
+    CHAPTER II
+    CHAPTER III
+    CHAPTER IV
+    CHAPTER V
+    CHAPTER VI
+    CHAPTER VII
+
+    PART II
+
+    CHAPTER I
+    CHAPTER II
+    CHAPTER III
+    CHAPTER IV
+    CHAPTER V
+    CHAPTER VI
+    CHAPTER VII
+
+    PART III
+
+    CHAPTER I
+    CHAPTER II
+    CHAPTER III
+    CHAPTER IV
+    CHAPTER V
+    CHAPTER VI
+
+    PART IV
+
+    CHAPTER I
+    CHAPTER II
+    CHAPTER III
+    CHAPTER IV
+    CHAPTER V
+    CHAPTER VI
+
+    PART V
+
+    CHAPTER I
+    CHAPTER II
+    CHAPTER III
+    CHAPTER IV
+    CHAPTER V
+
+    PART VI
+
+    CHAPTER I
+    CHAPTER II
+    CHAPTER III
+    CHAPTER IV
+    CHAPTER V
+    CHAPTER VI
+    CHAPTER VII
+    CHAPTER VIII
+
+    EPILOGUE
+
+
+
+
+TRANSLATOR’S PREFACE
+
+A few words about Dostoevsky himself may help the English reader to
+understand his work.
+
+Dostoevsky was the son of a doctor. His parents were very hard-working
+and deeply religious people, but so poor that they lived with their
+five children in only two rooms. The father and mother spent their
+evenings in reading aloud to their children, generally from books of a
+serious character.
+
+
+In the words of a Russian critic, who seeks to explain the feeling
+inspired by Dostoevsky: “He was one of ourselves, a man of our blood
+and our bone, but one who has suffered and has seen so much more
+deeply than we have his insight impresses us as wisdom... that wisdom
+of the heart which we seek that we may learn from it how to live. All
+his other gifts came to him from nature, this he won for himself and
+through it he became great.”
+
+
+
+
+CRIME AND PUNISHMENT
+
+
+
+
+PART I
+
+
+CHAPTER I
+
+
+On an exceptionally hot evening early in July a young man came out of
+the garret in which he lodged in S. Place and walked slowly, as though
+in hesitation, towards K. bridge.
+
+He had successfully avoided meeting his landlady on the staircase.
+His garret was under the roof of a high, five-storied house and was
+more like a cupboard than a room. The landlady who provided him with
+garret, dinners, and attendance, lived on the floor below, and every
+time he went out he was obliged to pass her kitchen, the door of which
+invariably stood open. And each time he passed, the young man had a
+sick, frightened feeling, which made him scowl and feel ashamed. He was
+hopelessly in debt to his landlady, and was afraid of meeting her.
+
+This was not because he was cowardly and abject, quite the contrary;
+but for some time past he had been in an overstrained irritable
+condition, verging on hypochondria. He had become so completely
+absorbed in himself, and isolated from his fellows that he dreaded
+meeting, not only his landlady, but anyone at all. He was crushed by
+poverty, but the anxieties of his position had of late ceased to weigh
+upon him. He had given up attending to matters of practical importance;
+he had lost all desire to do so. Nothing that any landlady could do had
+a real terror for him. But to be stopped on the stairs, to be forced
+to listen to her trivial, irrelevant gossip, to pestering demands for
+payment, threats and complaints, and to rack his brains for excuses,
+to prevaricate, to lie--no, rather than that, he would creep down the
+stairs like a cat and slip out unseen.
+
+This evening, however, on coming out into the street, he became acutely
+aware of his fears.
+
+“I want to attempt a thing _like that_ and am frightened by these
+trifles,” he thought, with an odd smile. “Hm... yes, all is in a man’s
+hands and he lets it all slip from cowardice, that’s an axiom. It
+would be interesting to know what it is men are most afraid of. Taking
+a new step, uttering a new word is what they fear most.... But I am
+talking too much. It’s because I chatter that I do nothing. Or perhaps
+it is that I chatter because I do nothing. I’ve learned to chatter
+this last month, lying for days together in my den thinking... of Jack
+the Giant-killer. Why am I going there now? Am I capable of _that_?
+Is _that_ serious? It is not serious at all. It’s simply a fantasy to
+amuse myself; a plaything! Yes, maybe it is a plaything.”
+
+
+CHAPTER II
+
+
+Raskolnikov was not used to crowds, and, as we said before, he avoided
+society of every sort, more especially of late. But now all at once
+he felt a desire to be with other people. Something new seemed to
+be taking place within him, and with it he felt a sort of thirst
+for company. He was so weary after a whole month of concentrated
+wretchedness and gloomy excitement that he longed to rest, if only for
+a moment, in some other world, whatever it might be; and, in spite of
+the filthiness of the surroundings, he was glad now to stay in the
+tavern.
+
+The master of the establishment was in another room, but he frequently
+came down some steps into the main room, his jaunty, tarred boots
+with red turn-over tops coming into view each time before the rest
+of his person. He wore a full coat and a horribly greasy black satin
+waistcoat, with no cravat, and his whole face seemed smeared with oil
+like an iron lock. At the counter stood a boy of about fourteen, and
+there was another boy somewhat younger who handed whatever was wanted.
+On the counter lay some sliced cucumber, some pieces of dried black
+bread, and some fish, chopped up small, all smelling very bad. It was
+insufferably close, and so heavy with the fumes of spirits that five
+minutes in such an atmosphere might well make a man drunk.
+
+
+Raskolnikov dropped on to a chair, but he kept his eyes fixed on the
+face of Ilya Petrovitch, which expressed unpleasant surprise. Both
+looked at one another for a minute and waited. Water was brought.
+
+“It was I...” began Raskolnikov.
+
+“Drink some water.”
+
+Raskolnikov refused the water with his hand, and softly and brokenly,
+but distinctly said:
+
+“_It was I killed the old pawnbroker woman and her sister Lizaveta with
+an axe and robbed them._”
+
+Ilya Petrovitch opened his mouth. People ran up on all sides.
+
+Raskolnikov repeated his statement.
+
+
+
+
+EPILOGUE
+
+
+I
+
+Siberia. On the banks of a broad solitary river stands a town, one of
+the administrative centres of Russia; in the town there is a fortress,
+in the fortress there is a prison. In the prison the second-class
+convict Rodion Raskolnikov has been confined for nine months. Almost a
+year and a half has passed since his crime.
+
+There had been little difficulty about his trial. The criminal adhered
+exactly, firmly, and clearly to his statement. He did not confuse nor
+misrepresent the facts, nor soften them in his own interest, nor omit
+the smallest detail. He explained every incident of the murder, the
+secret of _the pledge_ (the piece of wood with a strip of metal) which
+was found in the murdered woman’s hand. He described minutely how he
+had taken her keys, what they were like, as well as the chest and its
+contents; he explained the mystery of Lizaveta’s murder; described how
+Koch and, after him, the student knocked, and repeated all they had
+said to one another; how he afterwards had run downstairs and heard
+Nikolay and Dmitri shouting; how he had hidden in the empty flat and
+afterwards gone home. He ended by indicating the stone in the yard off
+the Voznesensky Prospect under which the purse and the trinkets were
+found. The whole thing, in fact, was perfectly clear. The lawyers and
+the judges were very much struck, among other things, by the fact that
+he had hidden the trinkets and the purse under a stone, without making
+use of them, and that, what was more, he did not now remember what
+the trinkets were like, or even how many there were. The fact that he
+had never opened the purse and did not even know how much was in it
+seemed incredible. There turned out to be in the purse three hundred
+and seventeen roubles and sixty copecks. From being so long under the
+stone, some of the most valuable notes lying uppermost had suffered
+from the damp. They were a long while trying to discover why the
+accused man should tell a lie about this, when about everything else
+he had made a truthful and straightforward confession. Finally some of
+the lawyers more versed in psychology admitted that it was possible he
+had really not looked into the purse, and so didn’t know what was in it
+when he hid it under the stone. But they immediately drew the deduction
+that the crime could only have been committed through temporary mental
+derangement, through homicidal mania, without object or the pursuit of
+gain. This fell in with the most recent fashionable theory of temporary
+insanity, so often applied in our days in criminal cases. Moreover
+Raskolnikov’s hypochondriacal condition was proved by many witnesses,
+by Dr. Zossimov, his former fellow students, his landlady and her
+servant. All this pointed strongly to the conclusion that Raskolnikov
+was not quite like an ordinary murderer and robber, but that there was
+another element in the case.
+
+
+II
+
+He was ill a long time. But it was not the horrors of prison life, not
+the hard labour, the bad food, the shaven head, or the patched clothes
+that crushed him. What did he care for all those trials and hardships!
+he was even glad of the hard work. Physically exhausted, he could at
+least reckon on a few hours of quiet sleep. And what was the food to
+him--the thin cabbage soup with beetles floating in it? In the past as
+a student he had often not had even that. His clothes were warm and
+suited to his manner of life. He did not even feel the fetters. Was he
+ashamed of his shaven head and parti-coloured coat? Before whom? Before
+Sonia? Sonia was afraid of him, how could he be ashamed before her?
+And yet he was ashamed even before Sonia, whom he tortured because of
+it with his contemptuous rough manner. But it was not his shaven head
+and his fetters he was ashamed of: his pride had been stung to the
+quick. It was wounded pride that made him ill. Oh, how happy he would
+have been if he could have blamed himself! He could have borne anything
+then, even shame and disgrace. But he judged himself severely, and his
+exasperated conscience found no particularly terrible fault in his
+past, except a simple _blunder_ which might happen to anyone. He was
+ashamed just because he, Raskolnikov, had so hopelessly, stupidly come
+to grief through some decree of blind fate, and must humble himself and
+submit to “the idiocy” of a sentence, if he were anyhow to be at peace.
+
+
+She too had been greatly agitated that day, and at night she was taken
+ill again. But she was so happy--and so unexpectedly happy--that she
+was almost frightened of her happiness. Seven years, _only_ seven
+years! At the beginning of their happiness at some moments they were
+both ready to look on those seven years as though they were seven days.
+He did not know that the new life would not be given him for nothing,
+that he would have to pay dearly for it, that it would cost him great
+striving, great suffering.
+
+But that is the beginning of a new story--the story of the gradual
+renewal of a man, the story of his gradual regeneration, of his passing
+from one world into another, of his initiation into a new unknown life.
+That might be the subject of a new story, but our present story is
+ended.
+
+
+
+
+*** END OF THE PROJECT GUTENBERG EBOOK CRIME AND PUNISHMENT ***

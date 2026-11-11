@@ -104,3 +104,53 @@ scripts\run.bat
 - **Voice IDs:** always compare canonical IDs (`voices.normalize_voice_id`). Old books store plain names and must keep working.
 - **Settings in manual testing:** `PUT /api/settings` writes `config.local.json` in the repo root (gitignored). Delete it after manual tests.
 - **Running Kokoro in the cloud:** the sandbox let me download the Kokoro release files from GitHub but blocked running them. CP4A may hit the same block; tests must use a fake `kokoro_onnx`.
+
+---
+# CP3 split fix — Claude Code (task 2: real books)
+Branch `cp3-split-fix-claude`, from `main` at `50e847d`. It also merges `ci-windows-claude` (PR #6), so the Windows check runs on this PR. Merge #6 first; then this PR only adds the splitting fix.
+
+## Why
+The first Windows CI run (`ci-windows-claude`) printed the real books, and their splits had problems:
+- Frankenstein's chapter 1 was a 30-second title page and contents.
+- Crime and Punishment's chapter 1 was the table of contents read aloud, and its last chapter was a bare "II".
+- Pride and Prejudice opened with a 4,967-word editor's preface and list of illustrations, and chapter 2 was titled `Chapter I.]`.
+
+## Changed (rules in CHECKPOINTS CP1C, marked "CP3")
+- **`text_cleaner.clean_for_speech` rule 0:** whole `[Illustration …]` blocks are removed, even across blank lines and with nested brackets (`[_Copyright 1894 by George Allen._]]`). A heading inside a block is kept (P&P prints `Chapter I.` only inside a caption). `^{rs}` superscripts become plain text. Lone `[` / `]` paragraphs are dropped.
+- **`chapters` rule 1:** new headings:
+  - Prologue, Epilogue, Preface, Introduction, Conclusion, Foreword, Afterword, including the `Translator’s/Editor’s/Author's …` forms.
+  - `act` and `scene` as keywords, for plays.
+  - Brackets around a heading are ignored.
+- **Rule 2, sub-sections:**
+  - A bare numeral inside a Part/Book/Volume/Act/Prologue/Epilogue gets the container's title (`Epilogue — I`, `Epilogue — II`).
+  - A Scene inside an Act does the same (`Act I — Scene II`).
+- **Rule 2a, front matter:** title pages, contents (including contents entries that are headings) and lists of illustrations before the first real section (≥ 20 story words) are dropped. The headings that belong to that section are kept (`Part I — Chapter I`). Trailing ALL-CAPS back matter (`THE END`, the printer's imprint) is dropped. If nothing looks like a chapter, nothing is dropped.
+- **Rule 2b, prefaces:** a Preface/Introduction/Foreword is kept only if it's the author's own. It is dropped if:
+  - its heading names a translator/editor/publisher/transcriber;
+  - the title page credits it to someone else (`with a Preface by George Saintsbury`);
+  - it is signed by someone else (`GEORGE SAINTSBURY.`).
+
+  The author check uses the surname, the initials (`M. W. S.`) or the word `author`.
+- **Rule 3:** a merged title doesn't repeat a heading (`Epilogue` + `Epilogue — I` → `Epilogue — I`).
+
+## Contract change (ARCHITECTURE §5, §10.2)
+- `split_chapters(text, authors=None)`. `pipeline.add_book` and `scripts/check_real_books.py` pass `metadata.authors`, and `preview_book` (CP4B) must do the same so the preview shows the same chapters. Without `authors`, only a signature or credit containing "author" counts as the author's.
+- §10.2 example titles updated. The CP4D spec for `tests/test_check_real_books.py` now expects `1. Part One — Chapter I  (312 words)` and `max 312`.
+
+## Tests
+- New fixtures: `tests/fixtures/excerpt_84_frankenstein.txt`, `excerpt_2554_crime_and_punishment.txt` and `excerpt_1342_pride_and_prejudice.txt`. They are verbatim passages of the real books: front matter, the first chapters and the end.
+- `tests/test_real_excerpts.py` checks the exact titles and that chapter 1 starts with the first sentence of the story.
+- New rule tests are in `test_chapters.py` and `test_text_cleaner.py`. Four old tests that expected the table of contents to be merged into chapter 1 were updated.
+- Full suite: **548 passed**.
+
+## Real books (full texts, run here before pushing)
+| Book | Before | After | First 5 | Last |
+|---|---|---|---|---|
+| Frankenstein (84) | 29 | 28 | Letter 1, Letter 2, Letter 3, Letter 4, Chapter 1 | Chapter 24 |
+| Crime and Punishment (2554) | 42 | 41 | Part I — Chapter I, Chapter II, Chapter III, Chapter IV, Chapter V | Epilogue — II |
+| Pride and Prejudice (1342) | 62 | 61 | Chapter I, Chapter II, Chapter III, Chapter IV, Chapter V | Chapter LXI |
+
+## Known / not done
+- Crime and Punishment footnote markers `[*]` and their notes are still read aloud (`[*] A religious sect. TRANSLATOR’S NOTE.`). The footnote rule only removes `[1]`-style markers.
+- A real chapter with fewer than 20 story words before the first long chapter is treated as front matter, unless it sits directly before that chapter.
+- Books already in a library keep their old chapters. Delete the book and add it again to get the new split.
