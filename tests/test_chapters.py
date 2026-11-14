@@ -96,22 +96,24 @@ def test_part_one_chapter_one_stack():
 
 
 def test_tiny_sections_cascade_until_big_enough():
-    text = cleaned_text("Contents", "CHAPTER I", "short", "CHAPTER II", "short", "CHAPTER III", LONG_TEXT,
-                        "CHAPTER IV", LONG_TEXT)  # fmt: skip
+    text = cleaned_text("CHAPTER I", LONG_TEXT, "CHAPTER II", "A short scene.", "CHAPTER III", "Another one.",
+                        "CHAPTER IV", "And a third.", "CHAPTER V", LONG_TEXT)  # fmt: skip
     result = split_chapters(text)
     # 4 merged headings: only the first and last are kept (CP3 title cap).
-    assert titles(result) == ["Opening — … — Chapter III", "Chapter IV"]
-    assert result[0][1] == cleaned_text("Contents", "short", "short", LONG_TEXT)
+    assert titles(result) == ["Chapter I", "Chapter II — … — Chapter V"]
+    assert result[1][1] == cleaned_text("A short scene.", "Another one.", "And a third.", LONG_TEXT)
     assert all(len(body.split()) >= 50 for _, body in result)
 
 
 def test_three_merged_headings_keep_every_part():
-    result = split_chapters(cleaned_text("PART ONE", "CHAPTER I", "short", "CHAPTER II", LONG_TEXT, "CHAPTER III", LONG_TEXT))
+    text = cleaned_text("PART ONE", "CHAPTER I", "A short opening scene.", "CHAPTER II", LONG_TEXT, "CHAPTER III", LONG_TEXT)
+    result = split_chapters(text)
     assert titles(result) == ["Part One — Chapter I — Chapter II", "Chapter III"]
+    assert result[0][1] == cleaned_text("A short opening scene.", LONG_TEXT)
 
 
-def test_table_of_contents_with_paragraph_entries_gives_a_short_title():
-    """CP3: a TOC whose entries are separate paragraphs used to become one 30-part title."""
+def test_table_of_contents_with_paragraph_entries_is_dropped():
+    """CP3: a TOC whose entries are separate headings is front matter, not part of Letter 1."""
     toc = ["Frankenstein;", "CONTENTS"] + [f"Letter {i}" for i in range(1, 5)] + [f"Chapter {i}" for i in range(1, 25)]
     body = []
     for i in range(1, 5):
@@ -119,8 +121,8 @@ def test_table_of_contents_with_paragraph_entries_gives_a_short_title():
     for i in range(1, 3):
         body += [f"Chapter {i}", LONG_TEXT]
     result = split_chapters(cleaned_text(*toc, *body))
-    assert titles(result) == ["Opening — … — Letter 1", "Letter 2", "Letter 3", "Letter 4", "Chapter 1", "Chapter 2"]
-    assert result[0][1] == cleaned_text("Frankenstein;", "CONTENTS", LONG_TEXT)
+    assert titles(result) == ["Letter 1", "Letter 2", "Letter 3", "Letter 4", "Chapter 1", "Chapter 2"]
+    assert result[0][1] == LONG_TEXT
 
 
 def test_tiny_last_section_merges_into_previous_and_keeps_its_title():
@@ -219,9 +221,8 @@ def test_never_empty_list_or_body():
 
 def test_sample_book_fixture():
     result = split_chapters(clean((FIXTURES / "sample_book.txt").read_text(encoding="utf-8")))
-    assert titles(result) == ["Opening — Part One — Chapter I", "Chapter II", "Chapter III"]
-    assert result[0][1].startswith("CONTENTS\n\n")  # TOC absorbed into the first chapter
-    assert "This is the first chapter." in result[0][1]
+    assert titles(result) == ["Part One — Chapter I", "Chapter II", "Chapter III"]
+    assert result[0][1].startswith("This is the first chapter.")  # contents dropped (CP3 rule 2a)
     assert result[1][1].startswith("This is the second chapter.")
     assert result[2][1].startswith("This is the third chapter.")
     for _, body in result:
@@ -235,3 +236,114 @@ def test_no_chapters_fixture_gives_exactly_three_parts():
     result = split_chapters(cleaned)
     assert titles(result) == ["Part 1", "Part 2", "Part 3"]
     assert_text_intact(result, cleaned.split("\n\n"))
+
+
+# ---------------------------------------------------------------- CP3: named sections, plays, containers
+
+
+@pytest.mark.parametrize(
+    "heading",
+    [
+        "Epilogue", "EPILOGUE", "Prologue.", "Preface", "PREFACE.", "Introduction", "Conclusion", "Foreword",
+        "Afterword", "TRANSLATOR’S PREFACE", "Author's Preface", "The Editor's Introduction",
+        "Epilogue: Siberia", "PROLOGUE IN HEAVEN", "ACT I", "Act II. Scene 3", "SCENE II. A room in the castle.",
+        "Scene 4", "[Chapter I.]", "Chapter I.]",
+    ],
+)  # fmt: skip
+def test_cp3_headings(heading):
+    assert _is_heading(heading)
+
+
+@pytest.mark.parametrize(
+    "prose",
+    ["Epilogue to a long life was quiet.", "The preface was long.", "Act now, or never.", "Scene two was better.",
+     "Introduction of the new rules went badly.", "Conclusion reached"],
+)  # fmt: skip
+def test_cp3_prose_is_not_a_heading(prose):
+    assert not _is_heading(prose)
+
+
+def test_epilogue_with_bare_numeral_chapters():
+    """Crime and Punishment: EPILOGUE, then I and II."""
+    text = cleaned_text("CHAPTER VIII", LONG_TEXT, "EPILOGUE", "I", LONG_TEXT, "II", LONG_TEXT)
+    assert titles(split_chapters(text)) == ["Chapter VIII", "Epilogue — I", "Epilogue — II"]
+
+
+def test_play_acts_and_scenes():
+    text = cleaned_text("ACT I", "SCENE I. ELSINORE.", LONG_TEXT, "Scene II. A room of state.", LONG_TEXT,
+                        "ACT II", "SCENE I", LONG_TEXT)  # fmt: skip
+    assert titles(split_chapters(text)) == ["Act I — Scene I. Elsinore", "Act I — Scene II. A room of state",
+                                            "Act II — Scene I"]  # fmt: skip
+
+
+def test_prologue_is_story_and_kept():
+    text = cleaned_text("CONTENTS", "PROLOGUE", "CHAPTER I", "PROLOGUE", LONG_TEXT, "CHAPTER I", LONG_TEXT)
+    assert titles(split_chapters(text)) == ["Prologue", "Chapter I"]
+
+
+# ---------------------------------------------------------------- CP3: front matter (rule 2a) and prefaces (2b)
+
+
+def test_title_page_before_first_chapter_is_dropped():
+    text = cleaned_text("THE BOOK", "by A. Writer", "London: Printed for the Author", "Chapter I", LONG_TEXT, "Chapter II", LONG_TEXT)
+    result = split_chapters(text)
+    assert titles(result) == ["Chapter I", "Chapter II"]
+    assert result[0][1] == LONG_TEXT
+
+
+def test_list_of_illustrations_is_dropped():
+    text = cleaned_text("List of Illustrations.", "PAGE", "Frontispiece iv", "“The efforts of his aunt” 448",
+                        "Chapter I", LONG_TEXT, "Chapter II", LONG_TEXT)  # fmt: skip
+    assert titles(split_chapters(text)) == ["Chapter I", "Chapter II"]
+
+
+def test_book_without_headings_keeps_its_text_but_not_its_title_lines():
+    story = "It was a dark and stormy night, and the rain fell in torrents. " + LONG_TEXT
+    result = split_chapters(cleaned_text("A DARK NIGHT", "by Someone", story))
+    assert result == [("Opening", story)]
+
+
+def test_authors_own_unsigned_preface_is_kept():
+    text = cleaned_text("PREFACE", "I wrote this book because I wanted to. " + LONG_TEXT, "Chapter I", LONG_TEXT)
+    assert titles(split_chapters(text, ["Writer, Anne"])) == ["Preface", "Chapter I"]
+
+
+def test_translators_preface_is_dropped():
+    text = cleaned_text("TRANSLATOR’S PREFACE", "A few words about the author. " + LONG_TEXT, "PART I", "CHAPTER I", LONG_TEXT)
+    result = split_chapters(text, ["Dostoyevsky, Fyodor"])
+    assert titles(result) == ["Part I — Chapter I"]
+    assert result[0][1] == LONG_TEXT
+
+
+def test_preface_credited_to_someone_else_on_the_title_page_is_dropped():
+    text = cleaned_text("PRIDE AND PREJUDICE", "by Jane Austen,", "with a Preface by George Saintsbury and Illustrations by Hugh Thomson",
+                        "PREFACE.", "Walt Whitman has somewhere a fine distinction. " + LONG_TEXT, "Chapter I.", LONG_TEXT)  # fmt: skip
+    assert titles(split_chapters(text, ["Austen, Jane"])) == ["Chapter I"]
+
+
+@pytest.mark.parametrize(
+    "signature, authors, kept",
+    [
+        ("GEORGE SAINTSBURY.", ["Austen, Jane"], False),
+        ("JANE AUSTEN.", ["Austen, Jane"], True),
+        ("M. W. S.", ["Shelley, Mary Wollstonecraft"], True),
+        ("THE AUTHOR.", ["Shelley, Mary Wollstonecraft"], True),
+        ("THE AUTHOR.", None, True),
+        ("GEORGE SAINTSBURY.", None, False),
+    ],
+)
+def test_signed_preface(signature, authors, kept):
+    text = cleaned_text("PREFACE", "Some thoughts about the novel and its time. " + LONG_TEXT, signature, "Chapter I", LONG_TEXT)
+    expected = ["Preface", "Chapter I"] if kept else ["Chapter I"]
+    assert titles(split_chapters(text, authors)) == expected
+
+
+def test_back_matter_in_capitals_is_dropped():
+    text = cleaned_text("Chapter I", LONG_TEXT, "Chapter II", LONG_TEXT, "THE END", "CHISWICK PRESS: CHARLES WHITTINGHAM AND CO.")
+    assert split_chapters(text)[-1] == ("Chapter II", LONG_TEXT)
+
+
+def test_only_front_matter_is_left_alone():
+    """Nothing looks like a chapter: keep the text rather than drop the whole book."""
+    result = split_chapters(cleaned_text("CONTENTS", "Chapter I", "Chapter II"))
+    assert result == [("Opening — Chapter I — Chapter II", "CONTENTS")]

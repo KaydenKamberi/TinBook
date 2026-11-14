@@ -1,0 +1,178 @@
+Short excerpts of Project Gutenberg eBook #84 (public domain), copied verbatim with the
+Gutenberg line breaks and markers; passages in between were left out. Used by tests/test_real_excerpts.py.
+Kept: title page and contents, the start of Letter 1, Letter 2 and Chapter 1.
+
+*** START OF THE PROJECT GUTENBERG EBOOK FRANKENSTEIN; OR, THE MODERN PROMETHEUS ***
+
+Frankenstein;
+
+or, the Modern Prometheus
+
+by Mary Wollstonecraft (Godwin) Shelley
+
+
+ CONTENTS
+
+ Letter 1
+ Letter 2
+ Letter 3
+ Letter 4
+ Chapter 1
+ Chapter 2
+ Chapter 3
+ Chapter 4
+ Chapter 5
+ Chapter 6
+ Chapter 7
+ Chapter 8
+ Chapter 9
+ Chapter 10
+ Chapter 11
+ Chapter 12
+ Chapter 13
+ Chapter 14
+ Chapter 15
+ Chapter 16
+ Chapter 17
+ Chapter 18
+ Chapter 19
+ Chapter 20
+ Chapter 21
+ Chapter 22
+ Chapter 23
+ Chapter 24
+
+
+
+
+Letter 1
+
+_To Mrs. Saville, England._
+
+
+St. Petersburgh, Dec. 11th, 17—.
+
+
+You will rejoice to hear that no disaster has accompanied the
+commencement of an enterprise which you have regarded with such evil
+forebodings. I arrived here yesterday, and my first task is to assure
+my dear sister of my welfare and increasing confidence in the success
+of my undertaking.
+
+I am already far north of London, and as I walk in the streets of
+Petersburgh, I feel a cold northern breeze play upon my cheeks, which
+braces my nerves and fills me with delight. Do you understand this
+feeling? This breeze, which has travelled from the regions towards
+which I am advancing, gives me a foretaste of those icy climes.
+Inspirited by this wind of promise, my daydreams become more fervent
+and vivid. I try in vain to be persuaded that the pole is the seat of
+frost and desolation; it ever presents itself to my imagination as the
+region of beauty and delight. There, Margaret, the sun is for ever
+visible, its broad disk just skirting the horizon and diffusing a
+perpetual splendour. There—for with your leave, my sister, I will put
+some trust in preceding navigators—there snow and frost are banished;
+and, sailing over a calm sea, we may be wafted to a land surpassing in
+wonders and in beauty every region hitherto discovered on the habitable
+globe. Its productions and features may be without example, as the
+phenomena of the heavenly bodies undoubtedly are in those undiscovered
+solitudes. What may not be expected in a country of eternal light? I
+may there discover the wondrous power which attracts the needle and may
+regulate a thousand celestial observations that require only this
+voyage to render their seeming eccentricities consistent for ever. I
+shall satiate my ardent curiosity with the sight of a part of the world
+never before visited, and may tread a land never before imprinted by
+the foot of man. These are my enticements, and they are sufficient to
+conquer all fear of danger or death and to induce me to commence this
+laborious voyage with the joy a child feels when he embarks in a little
+boat, with his holiday mates, on an expedition of discovery up his
+native river. But supposing all these conjectures to be false, you
+cannot contest the inestimable benefit which I shall confer on all
+mankind, to the last generation, by discovering a passage near the pole
+to those countries, to reach which at present so many months are
+requisite; or by ascertaining the secret of the magnet, which, if at
+all possible, can only be effected by an undertaking such as mine.
+
+
+Letter 2
+
+_To Mrs. Saville, England._
+
+Archangel, 28th March, 17—.
+
+
+How slowly the time passes here, encompassed as I am by frost and snow!
+Yet a second step is taken towards my enterprise. I have hired a
+vessel and am occupied in collecting my sailors; those whom I have
+already engaged appear to be men on whom I can depend and are certainly
+possessed of dauntless courage.
+
+But I have one want which I have never yet been able to satisfy, and the
+absence of the object of which I now feel as a most severe evil, I have no
+friend, Margaret: when I am glowing with the enthusiasm of success, there
+will be none to participate my joy; if I am assailed by disappointment, no
+one will endeavour to sustain me in dejection. I shall commit my thoughts
+to paper, it is true; but that is a poor medium for the communication of
+feeling. I desire the company of a man who could sympathise with me, whose
+eyes would reply to mine. You may deem me romantic, my dear sister, but I
+bitterly feel the want of a friend. I have no one near me, gentle yet
+courageous, possessed of a cultivated as well as of a capacious mind, whose
+tastes are like my own, to approve or amend my plans. How would such a
+friend repair the faults of your poor brother! I am too ardent in execution
+and too impatient of difficulties. But it is a still greater evil to me
+that I am self-educated: for the first fourteen years of my life I ran wild
+on a common and read nothing but our Uncle Thomas’ books of voyages.
+At that age I became acquainted with the celebrated poets of our own
+country; but it was only when it had ceased to be in my power to derive its
+most important benefits from such a conviction that I perceived the
+necessity of becoming acquainted with more languages than that of my native
+country. Now I am twenty-eight and am in reality more illiterate than many
+schoolboys of fifteen. It is true that I have thought more and that my
+daydreams are more extended and magnificent, but they want (as the painters
+call it) _keeping;_ and I greatly need a friend who would have sense
+enough not to despise me as romantic, and affection enough for me to
+endeavour to regulate my mind.
+
+
+Chapter 1
+
+
+I am by birth a Genevese, and my family is one of the most
+distinguished of that republic. My ancestors had been for many years
+counsellors and syndics, and my father had filled several public
+situations with honour and reputation. He was respected by all who
+knew him for his integrity and indefatigable attention to public
+business. He passed his younger days perpetually occupied by the
+affairs of his country; a variety of circumstances had prevented his
+marrying early, nor was it until the decline of life that he became a
+husband and the father of a family.
+
+As the circumstances of his marriage illustrate his character, I cannot
+refrain from relating them. One of his most intimate friends was a
+merchant who, from a flourishing state, fell, through numerous
+mischances, into poverty. This man, whose name was Beaufort, was of a
+proud and unbending disposition and could not bear to live in poverty
+and oblivion in the same country where he had formerly been
+distinguished for his rank and magnificence. Having paid his debts,
+therefore, in the most honourable manner, he retreated with his
+daughter to the town of Lucerne, where he lived unknown and in
+wretchedness. My father loved Beaufort with the truest friendship and
+was deeply grieved by his retreat in these unfortunate circumstances.
+He bitterly deplored the false pride which led his friend to a conduct
+so little worthy of the affection that united them. He lost no time in
+endeavouring to seek him out, with the hope of persuading him to begin
+the world again through his credit and assistance.
+
+Beaufort had taken effectual measures to conceal himself, and it was ten
+months before my father discovered his abode. Overjoyed at this discovery,
+he hastened to the house, which was situated in a mean street near the
+Reuss. But when he entered, misery and despair alone welcomed him. Beaufort
+had saved but a very small sum of money from the wreck of his fortunes, but
+it was sufficient to provide him with sustenance for some months, and in
+the meantime he hoped to procure some respectable employment in a
+merchant’s house. The interval was, consequently, spent in inaction;
+his grief only became more deep and rankling when he had leisure for
+reflection, and at length it took so fast hold of his mind that at the end
+of three months he lay on a bed of sickness, incapable of any exertion.
+
+
+*** END OF THE PROJECT GUTENBERG EBOOK FRANKENSTEIN; OR, THE MODERN PROMETHEUS ***

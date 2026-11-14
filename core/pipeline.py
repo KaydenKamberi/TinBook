@@ -38,7 +38,7 @@ def add_book(gutenberg_id: int, voice: str | None = None, start_chapter: int = 0
     if (library.book_dir(identifier) / "book.json").exists():
         raise BookAlreadyExists(f"Book {identifier} already exists in the library.")
     raw = gutenberg.download_text(gutenberg_id)
-    sections = chapters.split_chapters(text_cleaner.clean(raw))
+    sections = chapters.split_chapters(text_cleaner.clean(raw), metadata.authors)
     try:
         book = library.create_book(metadata, raw, sections, selected_voice, config.audio_format)
     except library.LibraryError:

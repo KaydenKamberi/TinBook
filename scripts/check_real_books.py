@@ -39,7 +39,7 @@ def check_book(gutenberg_id: int, show_all: bool = False) -> bool:
         print(f"FAILED to download: {error}\n")
         return False
     cleaned = text_cleaner.clean(raw)
-    sections = chapters.split_chapters(cleaned)
+    sections = chapters.split_chapters(cleaned, meta.authors)
     words = [len(body.split()) for _, body in sections]
     print(f"Downloaded: {len(raw):,} characters ({time.monotonic() - started:.1f} s)")
     print(f"Cleaned:    {len(cleaned):,} characters, {sum(words):,} words")

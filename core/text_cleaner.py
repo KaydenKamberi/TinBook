@@ -12,9 +12,12 @@ _PRODUCER_WINDOW = 40
 
 _PARAGRAPH_SPLIT = re.compile(r"\n\s*\n")
 _ILLUSTRATION = re.compile(r"\[Illustration[^\]]*\]", re.IGNORECASE)
+_ILLUSTRATION_START = re.compile(r"\[\s*Illustration\b", re.IGNORECASE)
+_MAX_ILLUSTRATION_CHARS = 2000  # an unclosed "[Illustration" never swallows more than this
+_SUPERSCRIPT = re.compile(r"\^\{([^{}]*)\}")  # "M^{rs}" -> "Mrs"
 _FOOTNOTE = re.compile(r"\[\d+\]")
 _ITALICS = re.compile(r"_([^_]+)_")
-_SCENE_BREAK = re.compile(r"^[\s*\-=]*$")
+_SCENE_BREAK = re.compile(r"^[\s*\-=\[\]]*$")  # also lone "]" / "[" left by captions
 _DASHES = re.compile(r"-{2,}")
 _DOUBLED_COMMA = re.compile(r",(\s*,)+")
 _SPACE_BEFORE_COMMA = re.compile(r"\s+,")
@@ -66,9 +69,51 @@ def _fix_dashes(paragraph: str) -> str:
     return paragraph.lstrip(", ")  # a paragraph that opened with "--"
 
 
+def _closing_bracket(text: str, start: int) -> int | None:
+    """Index of the "]" that closes the "[" at ``start`` (nested brackets count), or None."""
+    depth = 0
+    for index in range(start, min(len(text), start + _MAX_ILLUSTRATION_CHARS)):
+        if text[index] == "[":
+            depth += 1
+        elif text[index] == "]":
+            depth -= 1
+            if depth == 0:
+                return index
+    return None
+
+
+def _remove_illustrations(text: str) -> str:
+    """Rule 0: drop whole "[Illustration: …]" blocks, even across blank lines and with
+    nested brackets ("[Illustration: x [_Copyright 1894_]]"). A chapter heading inside
+    a block ("[Illustration: ·PRIDE AND PREJUDICE· / Chapter I.]") is kept as its own
+    paragraph, because some editions put the only copy of the heading there.
+    """
+    from core.chapters import _is_heading  # local import: chapters does not import this module
+
+    pieces: list[str] = []
+    position = 0
+    while match := _ILLUSTRATION_START.search(text, position):
+        pieces.append(text[position : match.start()])
+        end = _closing_bracket(text, match.start())
+        if end is None:  # unclosed: drop only the marker (and its colon)
+            position = match.end()
+            while position < len(text) and text[position] in " \t:":
+                position += 1
+            continue
+        inner = text[match.end() : end].lstrip(" \t:")
+        headings = [" ".join(p.split()) for p in _PARAGRAPH_SPLIT.split(inner)]
+        headings = [h for h in headings if h and _is_heading(h)]
+        pieces.append("\n\n" + "\n\n".join(headings) + "\n\n" if headings else " ")
+        position = end + 1
+    pieces.append(text[position:])
+    return "".join(pieces)
+
+
 def clean_for_speech(text: str) -> str:
     """Normalize book text so Piper reads it naturally."""
     cleaned: list[str] = []
+    # 0. Illustration blocks (may span paragraphs) and superscripts ("M^{rs}" -> "Mrs").
+    text = _SUPERSCRIPT.sub(r"\1", _remove_illustrations(text))
     # 1. Paragraphs are separated by one or more blank lines.
     for paragraph in _PARAGRAPH_SPLIT.split(text):
         # 2. Unwrap hard wraps; collapse whitespace runs.

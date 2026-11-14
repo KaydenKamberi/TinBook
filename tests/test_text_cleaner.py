@@ -248,3 +248,30 @@ class TestFixtureText:
         assert "* * *" not in result and "-----" not in result and ",," not in result
         assert "Updated editions" not in result  # footer removed
         assert result.startswith("CONTENTS\n\n")
+
+
+# ---------------------------------------------------------------- CP3: illustration blocks, brackets, superscripts
+
+
+def test_multi_paragraph_illustration_block_is_removed():
+    raw = "Before.\n\n[Illustration:\n\n   GEORGE ALLEN\n   PUBLISHER\n\n   LONDON\n                ]\n\nAfter."
+    assert clean_for_speech(raw) == "Before.\n\nAfter."
+
+
+def test_nested_brackets_in_illustration_are_removed():
+    raw = "Text.\n\n[Illustration: “He came down”\n\n[_Copyright 1894 by George Allen._]]\n\nMore text."
+    assert clean_for_speech(raw) == "Text.\n\nMore text."
+
+
+def test_chapter_heading_inside_illustration_is_kept():
+    raw = "[Illustration: ·PRIDE AND PREJUDICE·\n\n\n\nChapter I.]\n\n\nIt is a truth universally acknowledged."
+    assert clean_for_speech(raw) == "Chapter I.\n\nIt is a truth universally acknowledged."
+
+
+def test_lone_bracket_paragraphs_and_unclosed_marker():
+    assert clean_for_speech("One.\n\n]\n\n[\n\nTwo.") == "One.\n\nTwo."
+    assert clean_for_speech("[Illustration: never closed\n\nStory goes on.") == "never closed\n\nStory goes on."
+
+
+def test_superscripts():
+    assert clean_for_speech("“M^{rs}. Long and her nieces.”") == "“Mrs. Long and her nieces.”"
